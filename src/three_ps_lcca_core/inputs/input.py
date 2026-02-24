@@ -27,12 +27,35 @@ class GeneralParameters:
     days_per_month: int
     use_global_road_user_calculations: bool
 
+    def __post_init__(self):
+        if self.service_life_years <= 0:
+            raise ValueError("service_life_years must be > 0")
+
+        if not (0 <= self.investment_ratio <= 1):
+            raise ValueError("investment_ratio must be between 0 and 1")
+
+        for field in [
+            self.discount_rate_percent,
+            self.inflation_rate_percent,
+            self.interest_rate_percent,
+        ]:
+            if field < 0:
+                raise ValueError("Rates cannot be negative")
+
 @dataclass(frozen=True)
 class VehicleMetaData:
     vehicles_per_day: int
     carbon_emissions_kgCO2e_per_km: float
     accident_percentage: float
     pwr: Optional[float] = None
+
+    def __post_init__(self):
+        if self.vehicles_per_day < 0:
+            raise ValueError("vehicles_per_day must be >= 0")
+
+        if self.accident_percentage < 0:
+            raise ValueError("accident_percentage must be >= 0")
+
 
 @dataclass(frozen=True)
 class VehicleData:
@@ -44,6 +67,26 @@ class VehicleData:
     lcv: VehicleMetaData
     hcv: VehicleMetaData
     mcv: VehicleMetaData
+
+    def __post_init__(self):
+        for heavy in ["hcv", "mcv"]:
+            vehicle = getattr(self, heavy)
+            if vehicle.pwr is None:
+                raise ValueError(f"{heavy} requires pwr value")
+
+        total_acc = sum([
+            self.small_cars.accident_percentage,
+            self.big_cars.accident_percentage,
+            self.two_wheelers.accident_percentage,
+            self.o_buses.accident_percentage,
+            self.d_buses.accident_percentage,
+            self.lcv.accident_percentage,
+            self.hcv.accident_percentage,
+            self.mcv.accident_percentage,
+        ])
+
+        if abs(total_acc - 100) > 0.1:
+            raise ValueError("Vehicle accident percentages must sum to 100")
 
 
 @dataclass(frozen=True)
@@ -72,6 +115,26 @@ class AdditionalInputs:
     hourly_capacity: int
     force_free_flow_off_peak: bool
 
+    def __post_init__(self):
+        numeric_fields = [
+            self.road_roughness_mm_per_km,
+            self.road_rise_m_per_km,
+            self.road_fall_m_per_km,
+            self.additional_reroute_distance_km,
+            self.additional_travel_time_min,
+            self.crash_rate_accidents_per_million_km,
+            self.work_zone_multiplier,
+            self.carriage_width_in_m,
+        ]
+
+        for val in numeric_fields:
+            if val < 0:
+                raise ValueError("Numeric additional_inputs values must be >= 0")
+
+        if self.hourly_capacity <= 0:
+            raise ValueError("hourly_capacity must be positive")
+
+
 @dataclass(frozen=True)
 class TrafficAndRoadData:
     vehicle_data: VehicleData
@@ -83,12 +146,22 @@ class RoutineInspection:
     percentage_of_initial_construction_cost_per_year: float
     interval_in_years: int
 
+    def __post_init__(self):
+        for key, val in asdict(self).items():
+            if val < 0:
+                raise ValueError(f"{key} must be >= 0")
+
 
 @dataclass(frozen=True)
 class RoutineMaintenance:
     percentage_of_initial_construction_cost_per_year: float
     percentage_of_initial_carbon_emission_cost: float
     interval_in_years: int
+
+    def __post_init__(self):
+        for key, val in asdict(self).items():
+            if val < 0:
+                raise ValueError(f"{key} must be >= 0")
 
 @dataclass(frozen=True)
 class Routine:
@@ -100,6 +173,11 @@ class MajorInspection:
     percentage_of_initial_construction_cost: float
     interval_for_repair_and_rehabitation_in_years: int
 
+    def __post_init__(self):
+        for key, val in asdict(self).items():
+            if val < 0:
+                raise ValueError(f"{key} must be >= 0")
+
 
 @dataclass(frozen=True)
 class MajorRepair:
@@ -107,6 +185,11 @@ class MajorRepair:
     percentage_of_initial_carbon_emission_cost: float
     interval_for_repair_and_rehabitation_in_years: int
     repairs_duration_months: float
+
+    def __post_init__(self):
+        for key, val in asdict(self).items():
+            if val < 0:
+                raise ValueError(f"{key} must be >= 0")
 
 @dataclass(frozen=True)
 class Major:
@@ -118,6 +201,11 @@ class ReplacementCost:
     percentage_of_super_structure_cost: float
     interval_of_replacement_in_years: int
     duration_of_replacement_in_days: int
+
+    def __post_init__(self):
+        for key, val in asdict(self).items():
+            if val < 0:
+                raise ValueError(f"{key} must be >= 0")
 
 
 @dataclass(frozen=True)
@@ -131,6 +219,11 @@ class DemolitionDisposal:
     percentage_of_initial_construction_cost: float
     percentage_of_initial_carbon_emission_cost: float
     duration_for_demolition_and_disposal_in_months: float
+
+    def __post_init__(self):
+        for key, val in asdict(self).items():
+            if val < 0:
+                raise ValueError(f"{key} must be >= 0")
 
 
 @dataclass(frozen=True)

@@ -9,6 +9,13 @@ class FuelCost:
     other_oil: float
     grease: float
 
+    def __post_init__(self):
+        for field_name, value in self.__dict__.items():
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"{field_name} must be numeric")
+            if value < 0:
+                raise ValueError(f"{field_name} must be >= 0")
+
 
 @dataclass(frozen=True)
 class VehicleCategoryCost:
@@ -21,6 +28,12 @@ class VehicleCategoryCost:
     hcv: float
     mcv: float
 
+    def __post_init__(self):
+        for field_name, value in self.__dict__.items():
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"{field_name} must be numeric")
+            if value < 0:
+                raise ValueError(f"{field_name} cost must be >= 0")
 
 @dataclass(frozen=True)
 class VehicleCost:
@@ -42,12 +55,25 @@ class PassengerCrewCost:
     passenger_cost: float
     crew_cost: float
 
+    def __post_init__(self):
+        for field_name, value in self.__dict__.items():
+            if not isinstance(value, (int, float)):
+                raise TypeError(f"{field_name} must be numeric")
+            if value < 0:
+                raise ValueError(f"{field_name} cost must be >= 0")
 
 @dataclass(frozen=True)
 class MedicalCost:
     fatal: float
     major: float
     minor: float
+
+    def __post_init__(self):
+        for k, v in self.__dict__.items():
+            if not isinstance(v, (int, float)):
+                raise TypeError(f"Medical cost '{k}' must be numeric")
+            if v < 0:
+                raise ValueError(f"Medical cost '{k}' must be >= 0")
 
 
 @dataclass(frozen=True)
@@ -64,6 +90,12 @@ class WPIBlock:
 class WPIMetaData:
     year: int
     wpi: WPIBlock
+
+    def __post_init__(self):
+        if not isinstance(self.year, int):
+            raise TypeError("year must be integer")
+        if self.year <= 0:
+            raise ValueError("year must be positive")
 
     def to_dict(self):
         return asdict(self)

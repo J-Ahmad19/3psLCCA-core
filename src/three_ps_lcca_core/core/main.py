@@ -3,6 +3,9 @@ from .stage_cost.stage_cost import StageCostCalculator
 from .utils.dump_to_file import dump_to_file
 from .utils.list_suggestions import get_IRC_standard_suggestions
 from .utils.input_validator import ironclad_validator
+from three_ps_lcca_core.inputs.input import InputMetaData
+from three_ps_lcca_core.inputs.input_global import InputGlobalMetaData
+from three_ps_lcca_core.inputs.wpi import WPIMetaData
 
 
 def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False):
@@ -26,9 +29,35 @@ def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False)
 
     # --- 1. Load standard suggestions for validation ---
     suggestions = get_IRC_standard_suggestions()
+    if isinstance(input_data, dict):
+
+        gp = input_data.get("general_parameters")
+        if gp is None:
+            raise ValueError("Missing 'general_parameters' block.")
+
+        is_global = gp.get("use_global_road_user_calculations")
+
+        if is_global is True:
+            input_data = InputGlobalMetaData(**input_data)
+        elif is_global is False:
+            input_data = InputMetaData(**input_data)
+        else:
+            raise ValueError(
+                "'use_global_road_user_calculations' must be True or False."
+            )
+
+    elif not isinstance(input_data, (InputMetaData, InputGlobalMetaData)):
+        raise TypeError(
+            "input_data must be dict, InputMetaData, or InputGlobalMetaData."
+        )
+    
+    if wpi is not None and isinstance(wpi, dict):
+        wpi = WPIMetaData(**wpi)
+    elif wpi is not None and not isinstance(wpi, WPIMetaData):
+        raise TypeError("wpi must be dict or WPIMetaData.")
 
     # --- 2. Validate Input ---
-    validation_report = ironclad_validator(input_data, suggestions, wpi)
+    validation_report = ironclad_validator(input_data.to_dict(), suggestions, wpi)
 
     if validation_report["errors"]:
         # Stop execution if there are critical errors

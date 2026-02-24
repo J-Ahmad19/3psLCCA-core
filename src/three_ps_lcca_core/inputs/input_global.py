@@ -20,16 +20,34 @@ from three_ps_lcca_core.inputs.input import (
 class TotalCarbonEmission:
     total_emission_kgCO2e: float
 
+    def __post_init__(self):
+        if not isinstance(self.total_emission_kgCO2e, (int, float)):
+            raise TypeError("total_emission_kgCO2e must be numeric")
+        if self.total_emission_kgCO2e < 0:
+            raise ValueError("total_emission_kgCO2e must be >= 0")
+
 @dataclass(frozen=True)
 class DailyRoadUserCost:
     total_daily_ruc: float
     total_carbon_emission: TotalCarbonEmission
+
+    def __post_init__(self):
+        if not isinstance(self.total_daily_ruc, (int, float)):
+            raise TypeError("total_daily_ruc must be numeric")
+        if self.total_daily_ruc < 0:
+            raise ValueError("total_daily_ruc must be >= 0")
 
 @dataclass(frozen=True)
 class InputGlobalMetaData:
     general_parameters: GeneralParameters
     daily_road_user_cost_with_vehicular_emissions: DailyRoadUserCost
     maintenance_and_stage_parameters: MaintenanceAndStageParameters
+
+    def __post_init__(self):
+        if not self.general_parameters.use_global_road_user_calculations:
+            raise ValueError(
+                "Global input requires use_global_road_user_calculations=True"
+            )
 
     def to_dict(self) -> Dict:
         return asdict(self)
@@ -40,10 +58,6 @@ class InputGlobalMetaData:
         general_parameters = GeneralParameters(
             **data["general_parameters"]
         )
-        if not general_parameters.use_global_road_user_calculations:
-            raise ValueError(
-                "Global input requires use_global_road_user_calculations=True"
-            )
 
         daily_ruc = DailyRoadUserCost(
             total_daily_ruc=data["daily_road_user_cost_with_vehicular_emissions"]["total_daily_ruc"],
