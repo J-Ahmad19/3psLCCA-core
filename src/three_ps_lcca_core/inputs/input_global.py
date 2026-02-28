@@ -50,7 +50,8 @@ class InputGlobalMetaData:
             )
 
     def to_dict(self) -> Dict:
-        return asdict(self)
+        if isinstance(self, InputGlobalMetaData):
+            return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Dict):

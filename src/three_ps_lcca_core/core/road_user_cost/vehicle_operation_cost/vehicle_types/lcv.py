@@ -76,7 +76,7 @@ def compute_voc(vehicle_input: VehicleInput) -> Dict[str, Any]:
         # Passenger time cost
         PT = 0
 
-        # Crew cost
+        # crew_cost
         crew: float = 900 / UPD
 
         # Commodity holding cost
@@ -91,7 +91,7 @@ def compute_voc(vehicle_input: VehicleInput) -> Dict[str, Any]:
             CHC = 149.12 / UPD
         else:
             raise ValueError(f"Invalid lane type: {lane}")
-            
+
         # -----------------------------
         # BUILD FINAL OUTPUT
         # -----------------------------

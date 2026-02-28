@@ -212,7 +212,7 @@ class ReplacementCost:
 class UseStageCost:
     routine: Routine
     major: Major
-    replacement_cost_for_bearing_and_expansion_joint: ReplacementCost
+    replacement_costs_for_bearing_and_expansion_joint: ReplacementCost
 
 @dataclass(frozen=True)
 class DemolitionDisposal:
@@ -245,7 +245,8 @@ class InputMetaData:
     maintenance_and_stage_parameters: MaintenanceAndStageParameters
 
     def to_dict(self) -> Dict:
-        return asdict(self)
+        if isinstance(self, InputMetaData):
+            return asdict(self)
     
     @classmethod
     def from_dict(cls, data: Dict):
@@ -286,7 +287,7 @@ class InputMetaData:
                         **data['maintenance_and_stage_parameters']['use_stage_cost']['major']['repair']
                     )
                 ),
-                replacement_cost_for_bearing_and_expansion_joint=ReplacementCost(
+                replacement_costs_for_bearing_and_expansion_joint=ReplacementCost(
                     **data['maintenance_and_stage_parameters']['use_stage_cost']['replacement_costs_for_bearing_and_expansion_joint']
                 )
             ),

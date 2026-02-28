@@ -97,7 +97,7 @@ Input_instance = InputMetaData(
                     repairs_duration_months=3,
                 ),
             ),
-            replacement_cost_for_bearing_and_expansion_joint=ReplacementCost(
+            replacement_costs_for_bearing_and_expansion_joint=ReplacementCost(
                 percentage_of_super_structure_cost=12.5,
                 interval_of_replacement_in_years=25,
                 duration_of_replacement_in_days=2,
@@ -113,10 +113,10 @@ Input_instance = InputMetaData(
     ),
 )
 
-# Convert to dictionary
-Input = Input_instance.to_dict()
+
 
 # python -m examples.from_metadata.Input
 if __name__ == "__main__":
-
+    # Convert to dictionary
+    Input = Input_instance.to_dict()
     print(json.dumps(Input, indent=4))

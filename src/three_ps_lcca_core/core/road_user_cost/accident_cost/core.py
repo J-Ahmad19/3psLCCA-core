@@ -54,7 +54,7 @@ def accident_cost(traffic_input, wpi, debug=False):
         calculated_severity_counts[severity] = round(severity_count, 8)
 
         base_cost = human_cost_table[severity]
-        wpi_factor = wpi["WPI"]["medicalCost"][severity]
+        wpi_factor = wpi["WPI"]["medical_cost"][severity]
         adjusted_cost = base_cost * wpi_factor
 
         total_sev_cost = severity_count * adjusted_cost
@@ -90,7 +90,7 @@ def accident_cost(traffic_input, wpi, debug=False):
         veh_accident_count = total_daily_accidents * accident_pct / 100
 
         base_dmg_cost = damage_table[lookup_key]
-        wpi_factor = wpi["WPI"]["vehicleCost"]["propertyDamage"][lookup_key]
+        wpi_factor = wpi["WPI"]["vehicleCost"]["property_damage"][lookup_key]
         adj_dmg_cost = base_dmg_cost * wpi_factor
 
         total_veh_dmg_cost = veh_accident_count * adj_dmg_cost
@@ -141,7 +141,8 @@ def accident_cost(traffic_input, wpi, debug=False):
             "distribution_checks": {
                 "severity_percentage_sum": sum(severity_dist_percent.values()),
                 "vehicle_accident_percentage_sum": round(
-                    sum(v.get("accident_percentage", 0) for v in vehicle_data.values()), 2
+                    sum(v.get("accident_percentage", 0)
+                        for v in vehicle_data.values()), 2
                 )
             },
             "assumptions": [

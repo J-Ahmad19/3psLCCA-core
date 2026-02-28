@@ -36,7 +36,7 @@ def compute_voc(vehicle_input: VehicleInput) -> Dict[str, Any]:
             0.001*RG + 0.3414*RS - 0.2225*FL
         diesel: float = 35 + (983.503 / V) + 0.003*(V**2) + \
             0.002*RG + 0.339*RS - 0.4785*FL
-        
+
         # Spare parts
         SP_ET: float = (0.0045 * (RG - 2000) * 1e-5) * NP[c.ET]
         SP_IT: float = (0.0045 * (RG - 2000) * 1e-5) * NP[c.IT]
@@ -79,7 +79,7 @@ def compute_voc(vehicle_input: VehicleInput) -> Dict[str, Any]:
         else:
             PT = 721.73 / V
 
-        # Crew cost
+        # crew_cost
         crew: float = 0.0
 
         # Commodity holding cost

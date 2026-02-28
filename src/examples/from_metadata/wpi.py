@@ -2,27 +2,27 @@ import json
 from three_ps_lcca_core.inputs.wpi import (
     WPIMetaData,
     WPIBlock,
-    FuelCost,
+    fuel_cost,
     VehicleCost,
-    VehicleCategoryCost,
-    CommodityHoldingCost,
-    PassengerCrewCost,
-    MedicalCost,
-    VOTCost,
+    vehicle_category_cost,
+    commodity_holding_cost,
+    passenger_crew_cost,
+    medical_cost,
+    vot_cost,
 )
 
 wpi_object = WPIMetaData(
     year=2024,
-    wpi=WPIBlock(
-        fuel_cost=FuelCost(
+    WPI=WPIBlock(
+        fuel_cost=fuel_cost(
             petrol=1.8067915690866512,
             diesel=1.7733050847457628,
             engine_oil=1.4496951219512195,
             other_oil=1.6951351351351354,
             grease=1.6951351351351354,
         ),
-        vehicle_cost=VehicleCost(
-            property_damage=VehicleCategoryCost(
+        vehicleCost=VehicleCost(
+            property_damage=vehicle_category_cost(
                 1.1395759717314486,
                 1.1395759717314486,
                 1.1395759717314486,
@@ -32,7 +32,7 @@ wpi_object = WPIMetaData(
                 1.1395759717314486,
                 1.1395759717314486,
             ),
-            tyre_cost=VehicleCategoryCost(
+            tyre_cost=vehicle_category_cost(
                 1.123991935483871,
                 1.123991935483871,
                 1.1336538461538461,
@@ -42,7 +42,7 @@ wpi_object = WPIMetaData(
                 1.1702564102564101,
                 1.1702564102564101,
             ),
-            spare_parts=VehicleCategoryCost(
+            spare_parts=vehicle_category_cost(
                 1.1395759717314486,
                 1.1395759717314486,
                 1.1395759717314486,
@@ -52,7 +52,7 @@ wpi_object = WPIMetaData(
                 1.1395759717314486,
                 1.1395759717314486,
             ),
-            fixed_depreciation=VehicleCategoryCost(
+            fixed_depreciation=vehicle_category_cost(
                 1.1388400702987698,
                 1.1388400702987698,
                 1.1388400702987698,
@@ -63,7 +63,7 @@ wpi_object = WPIMetaData(
                 1.1388400702987698,
             ),
         ),
-        commodity_holding_cost=CommodityHoldingCost(
+        commodity_holding_cost=commodity_holding_cost(
             1.4788593903638152,
             1.4788593903638152,
             1.4788593903638152,
@@ -73,16 +73,16 @@ wpi_object = WPIMetaData(
             1.4788593903638152,
             1.4788593903638152,
         ),
-        passenger_crew_cost=PassengerCrewCost(
+        passenger_crew_cost=passenger_crew_cost(
             passenger_cost=1.2706270627062706,
             crew_cost=1.2706270627062706,
         ),
-        medical_cost=MedicalCost(
+        medical_cost=medical_cost(
             fatal=1.0867924528301887,
             major=1.0867924528301887,
             minor=1.0867924528301887,
         ),
-        vot_cost=VOTCost(
+        vot_cost=vot_cost(
             1.2706270627062706,
             1.2706270627062706,
             1.2706270627062706,
@@ -95,8 +95,6 @@ wpi_object = WPIMetaData(
     ),
 )
 
-wpi = wpi_object.to_dict()
-
 # python -m examples.from_metadata.wpi
 if __name__ == "__main__":
-    print(json.dumps(wpi, indent=4))
+    print(json.dumps(wpi_object.to_dict(), indent=4))

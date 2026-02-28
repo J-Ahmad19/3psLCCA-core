@@ -1,9 +1,9 @@
-import json 
+import json
 from three_ps_lcca_core.inputs.wpi import WPIMetaData
 wpi = {
     "year": 2024,
-    "wpi": {
-        "fuelCost": {
+    "WPI": {
+        "fuel_cost": {
             "petrol": 1.8067915690866512,
             "diesel": 1.7733050847457628,
             "engine_oil": 1.4496951219512195,
@@ -11,7 +11,7 @@ wpi = {
             "grease": 1.6951351351351354,
         },
         "vehicleCost": {
-            "propertyDamage": {
+            "property_damage": {
                 "small_cars": 1.1395759717314486,
                 "big_cars": 1.1395759717314486,
                 "two_wheelers": 1.1395759717314486,
@@ -21,7 +21,7 @@ wpi = {
                 "hcv": 1.1395759717314486,
                 "mcv": 1.1395759717314486,
             },
-            "tyreCost": {
+            "tyre_cost": {
                 "small_cars": 1.123991935483871,
                 "big_cars": 1.123991935483871,
                 "two_wheelers": 1.1336538461538461,
@@ -31,7 +31,7 @@ wpi = {
                 "hcv": 1.1702564102564101,
                 "mcv": 1.1702564102564101,
             },
-            "spareParts": {
+            "spare_parts": {
                 "small_cars": 1.1395759717314486,
                 "big_cars": 1.1395759717314486,
                 "two_wheelers": 1.1395759717314486,
@@ -41,7 +41,7 @@ wpi = {
                 "hcv": 1.1395759717314486,
                 "mcv": 1.1395759717314486,
             },
-            "fixedDepreciation": {
+            "fixed_depreciation": {
                 "small_cars": 1.1388400702987698,
                 "big_cars": 1.1388400702987698,
                 "two_wheelers": 1.1388400702987698,
@@ -52,7 +52,7 @@ wpi = {
                 "mcv": 1.1388400702987698,
             },
         },
-        "commodityHoldingCost": {
+        "commodity_holding_cost": {
             "small_cars": 1.4788593903638152,
             "big_cars": 1.4788593903638152,
             "two_wheelers": 1.4788593903638152,
@@ -62,16 +62,16 @@ wpi = {
             "hcv": 1.4788593903638152,
             "mcv": 1.4788593903638152,
         },
-        "passengerCrewCost": {
-            "Passenger Cost": 1.2706270627062706,
-            "Crew Cost": 1.2706270627062706,
+        "passenger_crew_cost": {
+            "passenger_cost": 1.2706270627062706,
+            "crew_cost": 1.2706270627062706,
         },
-        "medicalCost": {
+        "medical_cost": {
             "fatal": 1.0867924528301887,
             "major": 1.0867924528301887,
             "minor": 1.0867924528301887,
         },
-        "votCost": {
+        "vot_cost": {
             "small_cars": 1.2706270627062706,
             "big_cars": 1.2706270627062706,
             "two_wheelers": 1.2706270627062706,
@@ -88,4 +88,3 @@ wpi = {
 if __name__ == "__main__":
     wpi_metadata = WPIMetaData.from_dict(wpi)
     print(json.dumps(wpi_metadata.to_dict(), indent=4))
-    

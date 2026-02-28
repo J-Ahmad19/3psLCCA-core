@@ -38,26 +38,30 @@ def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False)
         is_global = gp.get("use_global_road_user_calculations")
 
         if is_global is True:
-            input_data = InputGlobalMetaData(**input_data)
+            input_data_obj = InputGlobalMetaData.from_dict(input_data)
         elif is_global is False:
-            input_data = InputMetaData(**input_data)
+            input_data_obj = InputMetaData.from_dict(input_data)
         else:
             raise ValueError(
                 "'use_global_road_user_calculations' must be True or False."
             )
+    elif isinstance(input_data, (InputMetaData, InputGlobalMetaData)):
+        input_data= input_data.to_dict()
 
-    elif not isinstance(input_data, (InputMetaData, InputGlobalMetaData)):
+    else:
         raise TypeError(
             "input_data must be dict, InputMetaData, or InputGlobalMetaData."
         )
     
     if wpi is not None and isinstance(wpi, dict):
-        wpi = WPIMetaData(**wpi)
-    elif wpi is not None and not isinstance(wpi, WPIMetaData):
+        wpi_obj = WPIMetaData.from_dict(wpi)
+    elif wpi is not None and isinstance(wpi, WPIMetaData):
+        wpi = wpi.to_dict()
+    else:
         raise TypeError("wpi must be dict or WPIMetaData.")
 
     # --- 2. Validate Input ---
-    validation_report = ironclad_validator(input_data.to_dict(), suggestions, wpi)
+    validation_report = ironclad_validator(input_data, suggestions, wpi)
 
     if validation_report["errors"]:
         # Stop execution if there are critical errors

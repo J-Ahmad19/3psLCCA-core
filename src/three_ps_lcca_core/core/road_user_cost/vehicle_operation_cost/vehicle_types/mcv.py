@@ -81,7 +81,7 @@ def compute_voc(vehicle_input: VehicleInput) -> Dict[str, Any]:
         # Passenger time cost
         PT: float = 0
 
-        # Crew cost
+        # crew_cost
         crew: float = 1800 / UPD
 
         # Commodity holding cost

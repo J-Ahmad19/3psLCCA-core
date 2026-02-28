@@ -66,7 +66,7 @@ global_input_object = InputGlobalMetaData(
                     repairs_duration_months=3,
                 ),
             ),
-            replacement_cost_for_bearing_and_expansion_joint=ReplacementCost(
+            replacement_costs_for_bearing_and_expansion_joint=ReplacementCost(
                 percentage_of_super_structure_cost=12.5,
                 interval_of_replacement_in_years=25,
                 duration_of_replacement_in_days=2,
@@ -82,9 +82,8 @@ global_input_object = InputGlobalMetaData(
     ),
 )
 
-Input_global = global_input_object.to_dict()
-
 
 # python -m examples.from_metadata.Input_global
 if __name__ == "__main__":
+    Input_global = global_input_object.to_dict()
     print(json.dumps(Input_global, indent=4))

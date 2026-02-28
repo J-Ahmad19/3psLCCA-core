@@ -1,8 +1,9 @@
 from dataclasses import dataclass, asdict
 from typing import Dict
 
+
 @dataclass(frozen=True)
-class FuelCost:
+class fuel_cost:
     petrol: float
     diesel: float
     engine_oil: float
@@ -18,7 +19,7 @@ class FuelCost:
 
 
 @dataclass(frozen=True)
-class VehicleCategoryCost:
+class vehicle_category_cost:
     small_cars: float
     big_cars: float
     two_wheelers: float
@@ -35,23 +36,27 @@ class VehicleCategoryCost:
             if value < 0:
                 raise ValueError(f"{field_name} cost must be >= 0")
 
+
 @dataclass(frozen=True)
 class VehicleCost:
-    property_damage: VehicleCategoryCost
-    tyre_cost: VehicleCategoryCost
-    spare_parts: VehicleCategoryCost
-    fixed_depreciation: VehicleCategoryCost
+    property_damage: vehicle_category_cost
+    tyre_cost: vehicle_category_cost
+    spare_parts: vehicle_category_cost
+    fixed_depreciation: vehicle_category_cost
+
 
 @dataclass(frozen=True)
-class CommodityHoldingCost(VehicleCategoryCost):
+class commodity_holding_cost(vehicle_category_cost):
     pass
 
-@dataclass(frozen=True)
-class VOTCost(VehicleCategoryCost):
-    pass
 
 @dataclass(frozen=True)
-class PassengerCrewCost:
+class vot_cost(vehicle_category_cost):
+    pass
+
+
+@dataclass(frozen=True)
+class passenger_crew_cost:
     passenger_cost: float
     crew_cost: float
 
@@ -62,8 +67,9 @@ class PassengerCrewCost:
             if value < 0:
                 raise ValueError(f"{field_name} cost must be >= 0")
 
+
 @dataclass(frozen=True)
-class MedicalCost:
+class medical_cost:
     fatal: float
     major: float
     minor: float
@@ -78,18 +84,18 @@ class MedicalCost:
 
 @dataclass(frozen=True)
 class WPIBlock:
-    fuel_cost: FuelCost
-    vehicle_cost: VehicleCost
-    commodity_holding_cost: CommodityHoldingCost
-    passenger_crew_cost: PassengerCrewCost
-    medical_cost: MedicalCost
-    vot_cost: VOTCost
+    fuel_cost: fuel_cost
+    vehicleCost: VehicleCost
+    commodity_holding_cost: commodity_holding_cost
+    passenger_crew_cost: passenger_crew_cost
+    medical_cost: medical_cost
+    vot_cost: vot_cost
 
 
 @dataclass(frozen=True)
 class WPIMetaData:
     year: int
-    wpi: WPIBlock
+    WPI: WPIBlock
 
     def __post_init__(self):
         if not isinstance(self.year, int):
@@ -98,26 +104,32 @@ class WPIMetaData:
             raise ValueError("year must be positive")
 
     def to_dict(self):
-        return asdict(self)
+        if isinstance(self, WPIMetaData):
+            return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Dict):
         return cls(
             year=data["year"],
-            wpi=WPIBlock(
-                fuel_cost=FuelCost(**data["WPI"]["fuelCost"]),
-                vehicle_cost=VehicleCost(
-                    property_damage=VehicleCategoryCost(**data["WPI"]["vehicleCost"]["propertyDamage"]),
-                    tyre_cost=VehicleCategoryCost(**data["WPI"]["vehicleCost"]["tyreCost"]),
-                    spare_parts=VehicleCategoryCost(**data["WPI"]["vehicleCost"]["spareParts"]),
-                    fixed_depreciation=VehicleCategoryCost(**data["WPI"]["vehicleCost"]["fixedDepreciation"]),
+            WPI=WPIBlock(
+                fuel_cost=fuel_cost(**data["WPI"]["fuel_cost"]),
+                vehicleCost=VehicleCost(
+                    property_damage=vehicle_category_cost(
+                        **data["WPI"]["vehicleCost"]["property_damage"]),
+                    tyre_cost=vehicle_category_cost(
+                        **data["WPI"]["vehicleCost"]["tyre_cost"]),
+                    spare_parts=vehicle_category_cost(
+                        **data["WPI"]["vehicleCost"]["spare_parts"]),
+                    fixed_depreciation=vehicle_category_cost(
+                        **data["WPI"]["vehicleCost"]["fixed_depreciation"]),
                 ),
-                commodity_holding_cost=CommodityHoldingCost(**data["WPI"]["commodityHoldingCost"]),
-                passenger_crew_cost=PassengerCrewCost(
-                    passenger_cost=data["WPI"]["passengerCrewCost"]["Passenger Cost"],
-                    crew_cost=data["WPI"]["passengerCrewCost"]["Crew Cost"],
+                commodity_holding_cost=commodity_holding_cost(
+                    **data["WPI"]["commodity_holding_cost"]),
+                passenger_crew_cost=passenger_crew_cost(
+                    passenger_cost=data["WPI"]["passenger_crew_cost"]["passenger_cost"],
+                    crew_cost=data["WPI"]["passenger_crew_cost"]["crew_cost"],
                 ),
-                medical_cost=MedicalCost(**data["WPI"]["medicalCost"]),
-                vot_cost=VOTCost(**data["WPI"]["votCost"]),
+                medical_cost=medical_cost(**data["WPI"]["medical_cost"]),
+                vot_cost=vot_cost(**data["WPI"]["vot_cost"]),
             )
         )

@@ -48,7 +48,7 @@ def execute_analysis(input_data):
 
     try:
         results = run_full_lcc_analysis(
-            input_data, life_cycle_construction_cost_breakdown, wpi=wpi, debug=False
+            input_data, life_cycle_construction_cost_breakdown, wpi=wpi, debug=True
         )
 
         print("✔ LCC Analysis Completed Successfully.")

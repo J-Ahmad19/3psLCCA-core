@@ -9,7 +9,7 @@ Vehicle = c.TWO_WHEELERS
 
 
 def compute_voc(vehicle_input: VehicleInput) -> Dict[str, Any]:
-    vt, W, RG, FL, RS, i_lane, lane, RF = extract_vehicle_inputs(vehicle_input)    
+    vt, W, RG, FL, RS, i_lane, lane, RF = extract_vehicle_inputs(vehicle_input)
     vt: str = vehicle_input["vehicle_type"]
     NP: Dict[str, Any] = IRCSP302019TableC1.vehicle_costs[Vehicle]
 
@@ -34,7 +34,8 @@ def compute_voc(vehicle_input: VehicleInput) -> Dict[str, Any]:
         # -----------------------------
 
         # Fuel consumption
-        petrol: float = 2.704 + (439.656 / V) + 0.00349 * (V ** 2) + 0.000157 * RG + 0.3642 * RS - 0.2709 * FL
+        petrol: float = 2.704 + (439.656 / V) + 0.00349 * \
+            (V ** 2) + 0.000157 * RG + 0.3642 * RS - 0.2709 * FL
         diesel: float = 0
 
         # Spare parts
@@ -81,7 +82,7 @@ def compute_voc(vehicle_input: VehicleInput) -> Dict[str, Any]:
         else:
             PT = 0
 
-        # Crew cost
+        # crew_cost
         crew: float = 0.0
 
         # Commodity holding cost

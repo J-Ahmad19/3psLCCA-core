@@ -37,7 +37,7 @@ def calculate_additional_time_cost(traffic_input, wpi, debug=False):
         traffic_input["additional_inputs"]["alternate_road_carriageway"]))
     occupancy = IRC.average_occupancy()
 
-    wpi_vot = wpi["WPI"]["votCost"]
+    wpi_vot = wpi["WPI"]["vot_cost"]
 
     total_cost = 0
     breakdown = {}

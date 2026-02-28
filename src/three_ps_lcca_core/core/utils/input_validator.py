@@ -121,9 +121,9 @@ from ..road_user_cost.carriage_width_info.carriagewayStandards import Carriagewa
 #         sev_dist = trd.get("accident_severity_distribution", {})
 
 #         # WPI Mapping References
-#         medical_wpi = wpi.get("WPI", {}).get("medicalCost", {})
+#         medical_wpi = wpi.get("WPI", {}).get("medical_cost", {})
 #         prop_damage_wpi = (
-#             wpi.get("WPI", {}).get("vehicleCost", {}).get("propertyDamage", {})
+#             wpi.get("WPI", {}).get("vehicleCost", {}).get("property_damage", {})
 #         )
 
 #         # A. Road Geometry / Carriageway Validation
@@ -136,12 +136,12 @@ from ..road_user_cost.carriage_width_info.carriagewayStandards import Carriagewa
 #             report["errors"].append(
 #                 f"Geometry Error: '{input_lane_code}' is not a valid alternate_road_carriageway. Expected one of {valid_lane_codes}."
 #             )
-                
+
 
 #         # B. Additional Numeric Field Validation
 #         for f in ADDITIONAL_FIELDS:
 #             check_num(add_in.get(f), f"additional_inputs -> {f}")
-                   
+
 #         hourly_capacity = add_in.get("hourly_capacity")
 #         std_capacity = CarriagewayStandards.get_capacity(input_lane_code)
 
@@ -150,7 +150,7 @@ from ..road_user_cost.carriage_width_info.carriagewayStandards import Carriagewa
 #         else:
 #             # Compare with standard and add info if different
 #             if hourly_capacity != std_capacity:
-#                 report["info"].append(f"User-provided hourly_capacity ({hourly_capacity}) differs from standard ({std_capacity}).")            
+#                 report["info"].append(f"User-provided hourly_capacity ({hourly_capacity}) differs from standard ({std_capacity}).")
 
 #         # C. Severity Distribution Logic
 #         sev_total = sum(sev_dist.values()) if isinstance(sev_dist, dict) else 0
@@ -228,7 +228,7 @@ from ..road_user_cost.carriage_width_info.carriagewayStandards import Carriagewa
 #     return report
 
 
-def ironclad_validator(input_obj, suggestions, wpi):
+def ironclad_validator(input, suggestions, wpi):
     """
     Ironclad validator for OSDAG LCC inputs.
     Assumes:
@@ -238,8 +238,8 @@ def ironclad_validator(input_obj, suggestions, wpi):
 
     report = {"errors": [], "warnings": [], "info": []}
 
-    gp = input_obj.general_parameters
-    is_global = gp.use_global_road_user_calculations
+    gp = input["general_parameters"]
+    is_global = gp["use_global_road_user_calculations"]
 
     # --------------------------------------------------
     # GLOBAL MODE CHECK
@@ -247,14 +247,15 @@ def ironclad_validator(input_obj, suggestions, wpi):
 
     if is_global:
         # Ensure traffic block is not mistakenly used
-        if hasattr(input_obj, "traffic_and_road_data"):
+        if "traffic_and_road_data" in input:
             report["warnings"].append(
                 "Global mode enabled. traffic_and_road_data will be ignored."
             )
 
         # Ensure WPI still structurally usable
         if "WPI".lower() not in [k.lower() for k in wpi.keys()]:
-            report["errors"].append("WPI Error: Missing top-level 'WPI' block.")
+            report["errors"].append(
+                "WPI Error: Missing top-level 'WPI' block.")
 
         return report
 
@@ -263,15 +264,15 @@ def ironclad_validator(input_obj, suggestions, wpi):
     # --------------------------------------------------
 
      # Ensure traffic data exists in non-global mode
-    if not hasattr(input_obj, "traffic_and_road_data"):
+    if "traffic_and_road_data" not in input:
         report["errors"].append(
             "Non-global mode requires traffic_and_road_data block."
         )
         return report
 
-    trd = input_obj.traffic_and_road_data
-    add_in = trd.additional_inputs
-    veh_data = trd.vehicle_data
+    trd = input["traffic_and_road_data"]
+    add_in = trd["additional_inputs"]
+    veh_data = trd["vehicle_data"]
 
     # --------------------------------------------------
     # 1. Suggestion Sync – Carriageway Code
@@ -282,9 +283,9 @@ def ironclad_validator(input_obj, suggestions, wpi):
         for l in suggestions.get("road_geometry", {}).get("lane_types", [])
     ]
 
-    if add_in.alternate_road_carriageway not in valid_lane_codes:
+    if add_in["alternate_road_carriageway"] not in valid_lane_codes:
         report["errors"].append(
-            f"Geometry Error: '{add_in.alternate_road_carriageway}' "
+            f"Geometry Error: '{add_in['alternate_road_carriageway']}' "
             f"is not valid. Expected one of {valid_lane_codes}."
         )
 
@@ -294,12 +295,12 @@ def ironclad_validator(input_obj, suggestions, wpi):
 
     try:
         std_capacity = CarriagewayStandards.get_capacity(
-            add_in.alternate_road_carriageway
+            add_in['alternate_road_carriageway']
         )
 
-        if add_in.hourly_capacity != std_capacity:
+        if add_in['hourly_capacity'] != std_capacity:
             report["info"].append(
-                f"User-provided hourly_capacity ({add_in.hourly_capacity}) "
+                f"User-provided hourly_capacity ({add_in['hourly_capacity']}) "
                 f"differs from standard ({std_capacity})."
             )
     except Exception:
@@ -315,7 +316,7 @@ def ironclad_validator(input_obj, suggestions, wpi):
         for v in suggestions.get("traffic", {}).get("vehicle_options", [])
     ]
 
-    model_vehicle_codes = list(vars(veh_data).keys())
+    model_vehicle_codes = list(veh_data.keys())
 
     # Ensure all required suggestion vehicles exist in model
     for code in required_vehicle_codes:
@@ -334,9 +335,9 @@ def ironclad_validator(input_obj, suggestions, wpi):
     # 4. WPI Mapping Integrity
     # --------------------------------------------------
 
-    medical_wpi = wpi.get("WPI", {}).get("medicalCost", {})
+    medical_wpi = wpi.get("WPI", {}).get("medical_cost", {})
     prop_damage_wpi = (
-        wpi.get("WPI", {}).get("vehicleCost", {}).get("propertyDamage", {})
+        wpi.get("WPI", {}).get("vehicleCost", {}).get("property_damage", {})
     )
 
     # Severity mapping
@@ -347,7 +348,7 @@ def ironclad_validator(input_obj, suggestions, wpi):
             )
 
     # Vehicle mapping
-    for code in vars(veh_data).keys():
+    for code in veh_data.keys():
 
         lookup_key = "o_buses" if code == "d_buses" else code
 

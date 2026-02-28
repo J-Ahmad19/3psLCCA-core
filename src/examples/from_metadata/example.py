@@ -19,9 +19,9 @@ from three_ps_lcca_core.core.main import run_full_lcc_analysis, get_IRC_standard
 
 
 # Import user-defined structured inputs
-from examples.from_metadata.Input import Input
-from examples.from_metadata.Input_global import Input_global
-from examples.from_metadata.wpi import wpi
+from examples.from_metadata.Input import Input_instance
+from examples.from_metadata.Input_global import global_input_object
+from examples.from_metadata.wpi import wpi_object
 
 
 # ============================================================
@@ -48,7 +48,7 @@ def execute_analysis(input_data):
 
     try:
         results = run_full_lcc_analysis(
-            input_data, life_cycle_construction_cost_breakdown, wpi=wpi, debug=False
+            input_data, life_cycle_construction_cost_breakdown, wpi=wpi_object, debug=False
         )
 
         print("✔ LCC Analysis Completed Successfully.")
@@ -85,10 +85,10 @@ if __name__ == "__main__":
     # general_parameters["use_global_road_user_calculations"]
     # ----------------------------------------------------------
 
-    results = execute_analysis(Input)
+    results = execute_analysis(Input_instance)
 
     # To use global mode instead, comment above and uncomment:
-    # results = execute_analysis(Input_global)
+    # results = execute_analysis(global_input_object)
 
     print("\n--- FINAL RESULTS ---")
 
