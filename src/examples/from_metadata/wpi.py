@@ -3,7 +3,7 @@ from three_ps_lcca_core.inputs.wpi import (
     WPIMetaData,
     WPIBlock,
     fuel_cost,
-    VehicleCost,
+    vehicle_cost,
     vehicle_category_cost,
     commodity_holding_cost,
     passenger_crew_cost,
@@ -21,7 +21,7 @@ wpi_object = WPIMetaData(
             other_oil=1.6951351351351354,
             grease=1.6951351351351354,
         ),
-        vehicleCost=VehicleCost(
+        vehicle_cost=vehicle_cost(
             property_damage=vehicle_category_cost(
                 1.1395759717314486,
                 1.1395759717314486,

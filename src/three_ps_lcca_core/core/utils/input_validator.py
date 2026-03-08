@@ -123,7 +123,7 @@ from ..road_user_cost.carriage_width_info.carriagewayStandards import Carriagewa
 #         # WPI Mapping References
 #         medical_wpi = wpi.get("WPI", {}).get("medical_cost", {})
 #         prop_damage_wpi = (
-#             wpi.get("WPI", {}).get("vehicleCost", {}).get("property_damage", {})
+#             wpi.get("WPI", {}).get("vehicle_cost", {}).get("property_damage", {})
 #         )
 
 #         # A. Road Geometry / Carriageway Validation
@@ -337,7 +337,7 @@ def ironclad_validator(input, suggestions, wpi):
 
     medical_wpi = wpi.get("WPI", {}).get("medical_cost", {})
     prop_damage_wpi = (
-        wpi.get("WPI", {}).get("vehicleCost", {}).get("property_damage", {})
+        wpi.get("WPI", {}).get("vehicle_cost", {}).get("property_damage", {})
     )
 
     # Severity mapping

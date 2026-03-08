@@ -90,7 +90,7 @@ def accident_cost(traffic_input, wpi, debug=False):
         veh_accident_count = total_daily_accidents * accident_pct / 100
 
         base_dmg_cost = damage_table[lookup_key]
-        wpi_factor = wpi["WPI"]["vehicleCost"]["property_damage"][lookup_key]
+        wpi_factor = wpi["WPI"]["vehicle_cost"]["property_damage"][lookup_key]
         adj_dmg_cost = base_dmg_cost * wpi_factor
 
         total_veh_dmg_cost = veh_accident_count * adj_dmg_cost

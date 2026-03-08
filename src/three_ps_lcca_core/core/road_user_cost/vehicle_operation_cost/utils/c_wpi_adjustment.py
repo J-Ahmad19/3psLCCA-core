@@ -9,9 +9,9 @@ class VOCPostProcessor:
         if "WPI" not in wpi_data:
             raise ValueError("CRITICAL: Root 'WPI' key missing from input.")
         self.wpi = wpi_data["WPI"]
-        self.v_cost_wpi = self.wpi.get("vehicleCost", {})
+        self.v_cost_wpi = self.wpi.get("vehicle_cost", {})
 
-    # Categories stored under WPI -> vehicleCost -> <category> -> <vehicle_key>
+    # Categories stored under WPI -> vehicle_cost -> <category> -> <vehicle_key>
     _VEHICLE_KEYED_CATEGORIES = {"tyre_cost", "spare_parts", "fixed_depreciation"}
 
     # Categories stored under WPI -> <category> -> <sub_key>  (no vehicle dimension)
@@ -30,13 +30,13 @@ class VOCPostProcessor:
         path = ""
 
         if category in self._VEHICLE_KEYED_CATEGORIES:
-            # WPI -> vehicleCost -> <category> -> <vehicle_key>
+            # WPI -> vehicle_cost -> <category> -> <vehicle_key>
             if category not in self.v_cost_wpi:
                 raise ValueError(
-                    f"CRITICAL: Category '{category}' missing from WPI -> vehicleCost."
+                    f"CRITICAL: Category '{category}' missing from WPI -> vehicle_cost."
                 )
             block = self.v_cost_wpi[category]
-            path = f"WPI -> vehicleCost -> {category}"
+            path = f"WPI -> vehicle_cost -> {category}"
             if not isinstance(block, dict) or v_key not in block:
                 raise ValueError(f"CRITICAL: Vehicle '{v_key}' missing in {path}")
             val = block[v_key]
@@ -130,7 +130,7 @@ class VOCPostProcessor:
             dc["tyre_cost"] = self._apply_adjustment(
                 b_tyre,
                 self._get_strict_multiplier("tyre_cost", vt),
-                f"WPI -> vehicleCost -> tyre_cost [{vt}]",
+                f"WPI -> vehicle_cost -> tyre_cost [{vt}]",
             )
 
             # --- Fuel & Lubricants ---
@@ -185,12 +185,12 @@ class VOCPostProcessor:
             dc[c.SP] = self._apply_adjustment(
                 {c.IT: dist_s[c.SP][c.IT], c.ET: dist_s[c.SP][c.ET]},
                 m_mult,
-                f"WPI -> vehicleCost -> spare_parts [{vt}]",
+                f"WPI -> vehicle_cost -> spare_parts [{vt}]",
             )
             dc["maintenance_labour"] = self._apply_adjustment(
                 {c.VALUE: dist_s["maintenance_labour"][c.VALUE]},
                 m_mult,
-                f"WPI -> vehicleCost -> spare_parts -> maintenance_labour [{vt}]",
+                f"WPI -> vehicle_cost -> spare_parts -> maintenance_labour [{vt}]",
             )
 
             # --- Time Related ---
@@ -198,7 +198,7 @@ class VOCPostProcessor:
             tc["fixed_cost"] = self._apply_adjustment(
                 {c.IT: time_s["fixed_cost"][c.IT], c.ET: time_s["fixed_cost"][c.ET]},
                 fd_mult,
-                f"WPI -> vehicleCost -> fixed_depreciation [{vt}]",
+                f"WPI -> vehicle_cost -> fixed_depreciation [{vt}]",
             )
 
             pc_mult_crew = self._get_strict_multiplier(

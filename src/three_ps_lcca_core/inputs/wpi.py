@@ -38,7 +38,7 @@ class vehicle_category_cost:
 
 
 @dataclass(frozen=True)
-class VehicleCost:
+class vehicle_cost:
     property_damage: vehicle_category_cost
     tyre_cost: vehicle_category_cost
     spare_parts: vehicle_category_cost
@@ -85,7 +85,7 @@ class medical_cost:
 @dataclass(frozen=True)
 class WPIBlock:
     fuel_cost: fuel_cost
-    vehicleCost: VehicleCost
+    vehicle_cost: vehicle_cost
     commodity_holding_cost: commodity_holding_cost
     passenger_crew_cost: passenger_crew_cost
     medical_cost: medical_cost
@@ -113,15 +113,15 @@ class WPIMetaData:
             year=data["year"],
             WPI=WPIBlock(
                 fuel_cost=fuel_cost(**data["WPI"]["fuel_cost"]),
-                vehicleCost=VehicleCost(
+                vehicle_cost=vehicle_cost(
                     property_damage=vehicle_category_cost(
-                        **data["WPI"]["vehicleCost"]["property_damage"]),
+                        **data["WPI"]["vehicle_cost"]["property_damage"]),
                     tyre_cost=vehicle_category_cost(
-                        **data["WPI"]["vehicleCost"]["tyre_cost"]),
+                        **data["WPI"]["vehicle_cost"]["tyre_cost"]),
                     spare_parts=vehicle_category_cost(
-                        **data["WPI"]["vehicleCost"]["spare_parts"]),
+                        **data["WPI"]["vehicle_cost"]["spare_parts"]),
                     fixed_depreciation=vehicle_category_cost(
-                        **data["WPI"]["vehicleCost"]["fixed_depreciation"]),
+                        **data["WPI"]["vehicle_cost"]["fixed_depreciation"]),
                 ),
                 commodity_holding_cost=commodity_holding_cost(
                     **data["WPI"]["commodity_holding_cost"]),

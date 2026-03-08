@@ -35,7 +35,7 @@ def validate_accident_input(traffic_input: dict, wpi: dict) -> tuple[bool, list[
     # 3. Validate vehicle_data and WPI mapping
     vehicle_data = traffic_input.get('vehicle_data')
     property_damage_wpi = wpi.get('WPI', {}).get(
-        'vehicleCost', {}).get('property_damage', {})
+        'vehicle_cost', {}).get('property_damage', {})
 
     if not isinstance(vehicle_data, dict):
         errors.append("'vehicle_data' must be a dictionary.")

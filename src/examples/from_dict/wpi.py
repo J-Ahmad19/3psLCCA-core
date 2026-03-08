@@ -10,7 +10,7 @@ wpi = {
             "other_oil": 1.6951351351351354,
             "grease": 1.6951351351351354,
         },
-        "vehicleCost": {
+        "vehicle_cost": {
             "property_damage": {
                 "small_cars": 1.1395759717314486,
                 "big_cars": 1.1395759717314486,
