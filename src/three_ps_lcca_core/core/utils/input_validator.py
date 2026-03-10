@@ -1,4 +1,6 @@
-from ..road_user_cost.carriage_width_info.carriagewayStandards import CarriagewayStandards
+from ..road_user_cost.carriage_width_info.carriagewayStandards import (
+    CarriagewayStandards,
+)
 
 # def ironclad_validator(data, suggestions, wpi):
 #     """
@@ -228,12 +230,19 @@ from ..road_user_cost.carriage_width_info.carriagewayStandards import Carriagewa
 #     return report
 
 
-def ironclad_validator(input, suggestions, wpi):
+def ironclad_validator(input, suggestions, wpi=None, eval_wpi=True):
     """
     Ironclad validator for OSDAG LCC inputs.
     Assumes:
     - All domain validation is enforced inside dataclasses.
     - This layer validates ecosystem consistency only.
+
+    Args:
+        input (dict): Project input dictionary.
+        suggestions (dict): IRC standard suggestions for sync validation.
+        wpi (dict, optional): Wholesale price index data. Required when eval_wpi is True.
+        eval_wpi (bool): If True, validates WPI mapping integrity. Default is True.
+                         Set to False when use_global_road_user_calculations is True.
     """
 
     report = {"errors": [], "warnings": [], "info": []}
@@ -252,22 +261,15 @@ def ironclad_validator(input, suggestions, wpi):
                 "Global mode enabled. traffic_and_road_data will be ignored."
             )
 
-        # Ensure WPI still structurally usable
-        if "WPI".lower() not in [k.lower() for k in wpi.keys()]:
-            report["errors"].append(
-                "WPI Error: Missing top-level 'WPI' block.")
-
         return report
 
     # --------------------------------------------------
     # NON-GLOBAL MODE VALIDATION
     # --------------------------------------------------
 
-     # Ensure traffic data exists in non-global mode
+    # Ensure traffic data exists in non-global mode
     if "traffic_and_road_data" not in input:
-        report["errors"].append(
-            "Non-global mode requires traffic_and_road_data block."
-        )
+        report["errors"].append("Non-global mode requires traffic_and_road_data block.")
         return report
 
     trd = input["traffic_and_road_data"]
@@ -279,8 +281,7 @@ def ironclad_validator(input, suggestions, wpi):
     # --------------------------------------------------
 
     valid_lane_codes = [
-        l["code"]
-        for l in suggestions.get("road_geometry", {}).get("lane_types", [])
+        l["code"] for l in suggestions.get("road_geometry", {}).get("lane_types", [])
     ]
 
     if add_in["alternate_road_carriageway"] not in valid_lane_codes:
@@ -295,25 +296,23 @@ def ironclad_validator(input, suggestions, wpi):
 
     try:
         std_capacity = CarriagewayStandards.get_capacity(
-            add_in['alternate_road_carriageway']
+            add_in["alternate_road_carriageway"]
         )
 
-        if add_in['hourly_capacity'] != std_capacity:
+        if add_in["hourly_capacity"] != std_capacity:
             report["info"].append(
                 f"User-provided hourly_capacity ({add_in['hourly_capacity']}) "
                 f"differs from standard ({std_capacity})."
             )
     except Exception:
-        report["warnings"].append(
-            "Unable to fetch standard capacity for carriageway."
-        )
+        report["warnings"].append("Unable to fetch standard capacity for carriageway.")
+
     # ==========================================================
     # 3. Suggestion Sync – Required Vehicles
     # ==========================================================
 
     required_vehicle_codes = [
-        v["code"]
-        for v in suggestions.get("traffic", {}).get("vehicle_options", [])
+        v["code"] for v in suggestions.get("traffic", {}).get("vehicle_options", [])
     ]
 
     model_vehicle_codes = list(veh_data.keys())
@@ -331,30 +330,36 @@ def ironclad_validator(input, suggestions, wpi):
             report["warnings"].append(
                 f"Traffic Sync Warning: Unexpected vehicle '{code}' not defined in suggestions."
             )
+
     # --------------------------------------------------
-    # 4. WPI Mapping Integrity
+    # 4. WPI Mapping Integrity (skipped if eval_wpi is False)
     # --------------------------------------------------
 
-    medical_wpi = wpi.get("WPI", {}).get("medical_cost", {})
-    prop_damage_wpi = (
-        wpi.get("WPI", {}).get("vehicle_cost", {}).get("property_damage", {})
-    )
-
-    # Severity mapping
-    for sev in ["fatal", "major", "minor"]:
-        if sev not in medical_wpi:
+    if eval_wpi:
+        if wpi is None:
             report["errors"].append(
-                f"WPI Error: Missing medical cost index for severity '{sev}'."
+                "WPI Error: 'wpi' must be provided when 'eval_wpi' is True."
             )
+            return report
 
-    # Vehicle mapping
-    for code in veh_data.keys():
+        medical_wpi = wpi.get("WPI", {}).get("medical_cost", {})
+        prop_damage_wpi = (
+            wpi.get("WPI", {}).get("vehicle_cost", {}).get("property_damage", {})
+        )
 
-        lookup_key = "o_buses" if code == "d_buses" else code
+        # Severity mapping
+        for sev in ["fatal", "major", "minor"]:
+            if sev not in medical_wpi:
+                report["errors"].append(
+                    f"WPI Error: Missing medical cost index for severity '{sev}'."
+                )
 
-        if lookup_key not in prop_damage_wpi:
-            report["errors"].append(
-                f"WPI Error: Missing property damage index for '{lookup_key}'."
-            )
+        # Vehicle mapping
+        for code in veh_data.keys():
+            lookup_key = "o_buses" if code == "d_buses" else code
+            if lookup_key not in prop_damage_wpi:
+                report["errors"].append(
+                    f"WPI Error: Missing property damage index for '{lookup_key}'."
+                )
 
     return report

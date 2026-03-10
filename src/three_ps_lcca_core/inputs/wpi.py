@@ -14,8 +14,8 @@ class fuel_cost:
         for field_name, value in self.__dict__.items():
             if not isinstance(value, (int, float)):
                 raise TypeError(f"{field_name} must be numeric")
-            if value < 0:
-                raise ValueError(f"{field_name} must be >= 0")
+            if value <= 0:
+                raise ValueError(f"{field_name} must be > 0")
 
 
 @dataclass(frozen=True)
@@ -33,8 +33,8 @@ class vehicle_category_cost:
         for field_name, value in self.__dict__.items():
             if not isinstance(value, (int, float)):
                 raise TypeError(f"{field_name} must be numeric")
-            if value < 0:
-                raise ValueError(f"{field_name} cost must be >= 0")
+            if value <= 0:
+                raise ValueError(f"{field_name} cost must be > 0")
 
 
 @dataclass(frozen=True)
@@ -64,8 +64,8 @@ class passenger_crew_cost:
         for field_name, value in self.__dict__.items():
             if not isinstance(value, (int, float)):
                 raise TypeError(f"{field_name} must be numeric")
-            if value < 0:
-                raise ValueError(f"{field_name} cost must be >= 0")
+            if value <= 0:
+                raise ValueError(f"{field_name} cost must be > 0")
 
 
 @dataclass(frozen=True)
@@ -78,8 +78,8 @@ class medical_cost:
         for k, v in self.__dict__.items():
             if not isinstance(v, (int, float)):
                 raise TypeError(f"Medical cost '{k}' must be numeric")
-            if v < 0:
-                raise ValueError(f"Medical cost '{k}' must be >= 0")
+            if v <= 0:
+                raise ValueError(f"Medical cost '{k}' must be > 0")
 
 
 @dataclass(frozen=True)

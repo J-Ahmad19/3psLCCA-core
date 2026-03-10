@@ -15,22 +15,25 @@ def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False)
     computes Life Cycle Stage Costs.
 
     Args:
-        input_data (dict): Project input dictionary.
+        input_data (dict | InputMetaData | InputGlobalMetaData): Project input.
         construction_costs (dict): Initial construction costs.
-        wpi (float, optional): Wholesale price index for RUC calculation.
+        wpi (dict | WPIMetaData, optional): Wholesale price index. Required when
+            use_global_road_user_calculations is False.
         debug (bool, optional): If True, dumps intermediate inputs to JSON.
 
     Returns:
         dict: Stage-wise LCC results (initial, use, reconstruction, end-of-life).
 
     Raises:
-        ValueError: If input fails validation or wpi is required but not provided.
+        TypeError: If input_data or wpi are of unexpected types.
+        ValueError: If input fails validation or required fields are missing.
     """
 
     # --- 1. Load standard suggestions for validation ---
     suggestions = get_IRC_standard_suggestions()
-    if isinstance(input_data, dict):
 
+    # --- 2. Normalise input_data to dict and resolve is_global ---
+    if isinstance(input_data, dict):
         gp = input_data.get("general_parameters")
         if gp is None:
             raise ValueError("Missing 'general_parameters' block.")
@@ -38,44 +41,46 @@ def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False)
         is_global = gp.get("use_global_road_user_calculations")
 
         if is_global is True:
-            input_data_obj = InputGlobalMetaData.from_dict(input_data)
+            InputGlobalMetaData.from_dict(input_data)  # validate structure early
         elif is_global is False:
-            input_data_obj = InputMetaData.from_dict(input_data)
+            InputMetaData.from_dict(input_data)  # validate structure early
         else:
             raise ValueError(
                 "'use_global_road_user_calculations' must be True or False."
             )
+
     elif isinstance(input_data, (InputMetaData, InputGlobalMetaData)):
-        input_data= input_data.to_dict()
+        is_global = isinstance(input_data, InputGlobalMetaData)
+        input_data = input_data.to_dict()
 
     else:
         raise TypeError(
             "input_data must be dict, InputMetaData, or InputGlobalMetaData."
         )
-    
-    if wpi is not None and isinstance(wpi, dict):
-        wpi_obj = WPIMetaData.from_dict(wpi)
-    elif wpi is not None and isinstance(wpi, WPIMetaData):
-        wpi = wpi.to_dict()
-    else:
-        raise TypeError("wpi must be dict or WPIMetaData.")
 
-    # --- 2. Validate Input ---
-    validation_report = ironclad_validator(input_data, suggestions, wpi)
+    # --- 3. Normalise wpi to dict ---
+    if isinstance(wpi, dict):
+        WPIMetaData.from_dict(wpi)  # validate structure early; dict form is retained downstream
+    elif isinstance(wpi, WPIMetaData):
+        wpi = wpi.to_dict()
+    elif wpi is not None:
+        raise TypeError("wpi must be a dict or WPIMetaData instance.")
+    # wpi=None is valid: when is_global=True, eval_wpi=False so wpi is never inspected;
+    # when is_global=False, eval_wpi=True and the validator will raise if wpi is required but absent.
+
+    # --- 4. Validate Input ---
+    # eval_wpi=False when is_global is True — WPI is not needed and may not be provided
+    validation_report = ironclad_validator(
+        input_data, suggestions, wpi, eval_wpi=not is_global
+    )
 
     if validation_report["errors"]:
-        # Stop execution if there are critical errors
         raise ValueError(
             f"Input validation failed with errors:\n{validation_report['errors']}"
         )
-        
 
-    # --- 3. Determine if RUC calculation is bypassed ---
-    bypass_ruc = input_data.get("general_parameters", {}).get(
-        "use_global_road_user_calculations", False
-    )
-
-    if bypass_ruc:
+    # --- 5. Calculate or fetch RUC ---
+    if is_global:
         # Use provided RUC from input_data
         ruc_results = input_data.get(
             "daily_road_user_cost_with_vehicular_emissions", {}
@@ -84,14 +89,11 @@ def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False)
             print("Bypassing RUC calculation. Using provided RUC:", ruc_results)
 
     else:
-        if wpi is None:
-            raise ValueError("wpi cannot be None when RUC calculation is required")
-
         # Calculate RUC normally
         traffic_data = input_data.get("traffic_and_road_data", {})
         ruc_results = calculate_road_user_costs(traffic_data, wpi, debug)
 
-    # --- 4. Prepare Stage Cost Parameters ---
+    # --- 6. Prepare Stage Cost Parameters ---
     stage_params = input_data.get("maintenance_and_stage_parameters", {}).copy()
     stage_params["general"] = input_data.get("general_parameters", {})
 
@@ -103,10 +105,9 @@ def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False)
             "Stage_Cost_Calculator_Inputs.json",
             {"stage_params": stage_params, "construction_costs": construction_costs},
         )
-        
         dump_to_file("A0_Validation_report.json", validation_report)
 
-    # --- 5. Initialize and Run LCC Calculations ---
+    # --- 7. Initialize and Run LCC Calculations ---
     stage_calc = StageCostCalculator(stage_params, construction_costs, debug)
 
     return {
@@ -115,5 +116,5 @@ def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False)
         "reconstruction": stage_calc.reconstruction(),
         "end_of_life": stage_calc.end_of_life_stage_costs(),
         "warnings": validation_report["warnings"],
-        "notes": validation_report["info"]
+        "notes": validation_report["info"],
     }
