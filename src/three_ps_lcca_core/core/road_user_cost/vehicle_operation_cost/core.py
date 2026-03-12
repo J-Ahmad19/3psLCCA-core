@@ -1,7 +1,5 @@
-from .utils.a_input_validation import validate_input
 from .vehicle_types import bigCars, buses, hcv, lcv, mcv, smallCars, two_wheeler
 from .utils import b_post_processor_for_VOC as pp
-import sys
 from ... import standard_keys as c
 from .utils import total_of_raw_voc 
 
@@ -70,16 +68,7 @@ def main(vehicle_input_raw, wpi, debug=False):
     vehicle_input = normalize_input(vehicle_input_raw)
 
     # --------------------
-    # 1. Validate input
-    # --------------------
-    try:
-        validate_input(vehicle_input)
-    except ValueError as e:
-        print("Input validation failed:\n", str(e))
-        sys.exit(1)
-
-    # --------------------
-    # 2. Vehicle model execution
+    # 1. Vehicle model execution
     # --------------------
     results = {}
     vehicle_info = vehicle_input.get("vehicle_info", {})
@@ -106,7 +95,7 @@ def main(vehicle_input_raw, wpi, debug=False):
                 results[vt] = model_module.compute_voc(input_for_model)
 
     # --------------------
-    # 3. Post-process results
+    # 2. Post-process results
     # --------------------
     summaryOfVOC = pp.post_process(results, wpi, debug)
     final_results = total_of_raw_voc.calculate_total_cost(summaryOfVOC, vehicle_input["vehicle_info"])

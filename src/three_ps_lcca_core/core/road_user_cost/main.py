@@ -14,6 +14,32 @@ def calculate_road_user_costs(traffic_input, wpi, debug=False):
     # Get additional reroute distance in km
     additional_rerouting_distance_km = traffic_input["additional_inputs"]["additional_reroute_distance_km"]
 
+    # Short-circuit: ADT = 0 means user opts out of all RUC → return zeros
+    total_adt = sum(v.get("vehicles_per_day", 0) for v in traffic_input["vehicle_data"].values())
+    if total_adt == 0:
+        return {
+            "accident_cost": {
+                "total_accident_cost_INR_per_day": 0.0,
+                "human_cost_INR_per_day": 0.0,
+                "vehicle_damage_cost_INR_per_day": 0.0,
+                "calculated_total_daily_accidents": 0.0,
+                "accident_severity_distribution_counts": {}
+            },
+            "vehicle_operation_cost": {
+                "distance_total": {"IT": 0.0, "ET": 0.0},
+                "time_total": {"IT": 0.0, "ET": 0.0},
+                "total": {"IT": 0.0, "ET": 0.0},
+                "unit": "Rs/km"
+            },
+            "value_of_time": {"total_Cost": 0.0, "unit": "Rs./day"},
+            "total_carbon_emission": {
+                "total_emission_kgCO2e": 0.0,
+                "unit": "kgCO2e/day",
+                "distance_per_day_km": additional_rerouting_distance_km
+            },
+            "total_daily_ruc": 0.0
+        }
+
     # 1. Accident Cost
     ac = accident_cost.accident_cost(traffic_input, wpi, debug)
 

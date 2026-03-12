@@ -1,6 +1,3 @@
-import json
-from three_ps_lcca_core.inputs.input_global import InputGlobalMetaData
-
 Input_global = {
     "general_parameters": {
         "service_life_years": 75,
@@ -63,11 +60,3 @@ Input_global = {
     },
 
 }
-
-
-# python -m three_ps_lcca_core.Example.Input_global
-if __name__ == "__main__":
-
-    global_input_metadata = InputGlobalMetaData.from_dict(Input_global)
-    dt = global_input_metadata.to_dict()
-    print(json.dumps(dt, indent=4))

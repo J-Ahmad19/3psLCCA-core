@@ -55,7 +55,7 @@ def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False)
 
     else:
         raise TypeError(
-            "input_data must be dict, InputMetaData, or InputGlobalMetaData."
+            "input_data must be a dict, InputMetaData, or InputGlobalMetaData."
         )
 
     # --- 3. Normalise wpi to dict ---

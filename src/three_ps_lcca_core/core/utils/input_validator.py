@@ -277,6 +277,14 @@ def ironclad_validator(input, suggestions, wpi=None, eval_wpi=True):
     veh_data = trd["vehicle_data"]
 
     # --------------------------------------------------
+    # Early exit: ADT = 0 means user opts out of RUC
+    # Skip all transport-related checks
+    # --------------------------------------------------
+    total_adt = sum(v.get("vehicles_per_day", 0) for v in veh_data.values())
+    if total_adt == 0:
+        return report
+
+    # --------------------------------------------------
     # 1. Suggestion Sync – Carriageway Code
     # --------------------------------------------------
 

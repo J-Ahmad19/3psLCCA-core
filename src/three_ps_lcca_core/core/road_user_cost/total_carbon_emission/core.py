@@ -1,4 +1,3 @@
-from .input_validation import validate_vehicle_data
 from ...utils.dump_to_file import dump_to_file
 
 def calculate_total_carbon_emission(vehicle_data: dict, distance_per_day_km: float, debug: bool = False) -> dict[str, float | str]:
@@ -26,11 +25,6 @@ def calculate_total_carbon_emission(vehicle_data: dict, distance_per_day_km: flo
     ValueError
         If vehicle_data is missing or not a dictionary
     """
-
-    # Validate the vehicle_data
-    is_valid, validation_errors = validate_vehicle_data(vehicle_data)
-    if not is_valid:
-        raise ValueError(f"Invalid vehicle_data: {validation_errors}")
 
     total_emission = 0.0
     breakdown = {}

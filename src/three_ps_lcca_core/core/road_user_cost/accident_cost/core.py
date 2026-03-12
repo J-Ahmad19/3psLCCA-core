@@ -2,7 +2,6 @@ from .IRCSP302019Table8_Table9 import (
     table8_Economic_Cost_for_Different_Type_of_Accidents,
     table9_Economic_Cost_of_Quantum_of_Vehicle_Damage_due_to_Accidents
 )
-from .input_validation import validate_accident_input
 from ... import standard_keys as c
 from ...utils.dump_to_file import dump_to_file
 
@@ -14,12 +13,6 @@ def accident_cost(traffic_input, wpi, debug=False):
     - Uses severity distribution for human cost
     - Uses vehicle accident % distribution for vehicle damage cost
     """
-
-    is_valid, errors = validate_accident_input(traffic_input, wpi)
-    if not is_valid:
-        raise ValueError(
-            f"Accident Input Validation Failed: {', '.join(errors)}"
-        )
 
     # ------------------------------------------------------------------
     # 1. Extract Inputs

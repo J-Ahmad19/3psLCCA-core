@@ -1,12 +1,4 @@
-import json
-from three_ps_lcca_core.inputs.input import InputMetaData
-
 Input = {
-    "project_metadata": {
-        "description": "Common input for OSDAG LCC Analysis",
-        "standard": "IRC 106:1990 / IRC SP 30-2019",
-        "country": "India",
-    },
     "general_parameters": {
         "service_life_years": 75,
         "analysis_period_years": 150,
@@ -126,10 +118,3 @@ Input = {
         },
     },
 }
-
-
-# python -m three_ps_lcca_core.Example.Input
-if __name__ == "__main__":
-    input_metadata = InputMetaData.from_dict(Input)
-    dt = input_metadata.to_dict()
-    print(json.dumps(dt, indent=4))

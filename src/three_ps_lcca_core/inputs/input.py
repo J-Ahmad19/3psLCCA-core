@@ -1,23 +1,6 @@
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional
 
-
-# -----------------------------
-# Project Metadata
-# -----------------------------
-
-@dataclass(frozen=True)
-class ProjectMetaData:
-    description: str
-    standard: str
-    country: str
-
-    def __post_init__(self):
-        for field_name in ["description", "standard", "country"]:
-            val = getattr(self, field_name)
-            if not isinstance(val, str) or not val.strip():
-                raise ValueError(f"project_metadata.{field_name} must be a non-empty string")
-
 @dataclass(frozen=True)
 class GeneralParameters:
     service_life_years: int
@@ -110,8 +93,8 @@ class VehicleData:
     def __post_init__(self):
         for heavy in ["hcv", "mcv"]:
             vehicle = getattr(self, heavy)
-            if vehicle.pwr is None:
-                raise ValueError(f"{heavy} requires pwr value")
+            if vehicle.vehicles_per_day > 0 and vehicle.pwr is None:
+                raise ValueError(f"{heavy} requires pwr value when vehicles_per_day > 0")
 
         total_acc = sum([
             self.small_cars.accident_percentage,
@@ -309,35 +292,37 @@ class MaintenanceAndStageParameters:
 
 @dataclass(frozen=True)
 class InputMetaData:
-    project_metadata: ProjectMetaData
     general_parameters: GeneralParameters
-    traffic_and_road_data: TrafficAndRoadData
     maintenance_and_stage_parameters: MaintenanceAndStageParameters
+    traffic_and_road_data: Optional[TrafficAndRoadData] = None
 
     def to_dict(self) -> Dict:
-        if isinstance(self, InputMetaData):
-            return asdict(self)
-    
+        return asdict(self)
+
     @classmethod
     def from_dict(cls, data: Dict):
 
-        project_metadata = ProjectMetaData(**data['project_metadata'])
         general_parameters = GeneralParameters(**data['general_parameters'])
-        vehicle_data = VehicleData(
-            **{
-                k: VehicleMetaData(**v)
-                for k, v in data['traffic_and_road_data']['vehicle_data'].items()
-            }
-        )
-        traffic_data = TrafficAndRoadData(
-            vehicle_data = vehicle_data,
-            accident_severity_distribution=AccidentSeverityDistribution(
-                **data['traffic_and_road_data']['accident_severity_distribution']
-            ),
-            additional_inputs=AdditionalInputs(
-                **data['traffic_and_road_data']['additional_inputs']
+
+        # ADT gate: only validate traffic sub-blocks when total traffic is non-zero
+        vehicle_data_raw = data.get('traffic_and_road_data', {}).get('vehicle_data', {})
+        total_adt = sum(v.get('vehicles_per_day', 0) for v in vehicle_data_raw.values()) if isinstance(vehicle_data_raw, dict) else 0
+
+        if total_adt > 0:
+            vehicle_data = VehicleData(
+                **{k: VehicleMetaData(**v) for k, v in data['traffic_and_road_data']['vehicle_data'].items()}
             )
-        )
+            traffic_data = TrafficAndRoadData(
+                vehicle_data=vehicle_data,
+                accident_severity_distribution=AccidentSeverityDistribution(
+                    **data['traffic_and_road_data']['accident_severity_distribution']
+                ),
+                additional_inputs=AdditionalInputs(
+                    **data['traffic_and_road_data']['additional_inputs']
+                )
+            )
+        else:
+            traffic_data = None
 
         maintenance_data = MaintenanceAndStageParameters(
             use_stage_cost=UseStageCost(
@@ -369,8 +354,7 @@ class InputMetaData:
         )
 
         return cls(
-            project_metadata=project_metadata,
             general_parameters=general_parameters,
-            traffic_and_road_data=traffic_data,
-            maintenance_and_stage_parameters=maintenance_data
+            maintenance_and_stage_parameters=maintenance_data,
+            traffic_and_road_data=traffic_data
         )

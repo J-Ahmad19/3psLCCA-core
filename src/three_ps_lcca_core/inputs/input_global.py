@@ -50,20 +50,17 @@ class InputGlobalMetaData:
             )
 
     def to_dict(self) -> Dict:
-        if isinstance(self, InputGlobalMetaData):
-            return asdict(self)
+        return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Dict):
 
-        general_parameters = GeneralParameters(
-            **data["general_parameters"]
-        )
+        general_parameters = GeneralParameters(**data['general_parameters'])
 
         daily_ruc = DailyRoadUserCost(
-            total_daily_ruc=data["daily_road_user_cost_with_vehicular_emissions"]["total_daily_ruc"],
+            total_daily_ruc=data['daily_road_user_cost_with_vehicular_emissions']['total_daily_ruc'],
             total_carbon_emission=TotalCarbonEmission(
-                **data["daily_road_user_cost_with_vehicular_emissions"]["total_carbon_emission"]
+                **data['daily_road_user_cost_with_vehicular_emissions']['total_carbon_emission']
             )
         )
 
@@ -71,27 +68,27 @@ class InputGlobalMetaData:
             use_stage_cost=UseStageCost(
                 routine=Routine(
                     inspection=RoutineInspection(
-                        **data["maintenance_and_stage_parameters"]["use_stage_cost"]["routine"]["inspection"]
+                        **data['maintenance_and_stage_parameters']['use_stage_cost']['routine']['inspection']
                     ),
                     maintenance=RoutineMaintenance(
-                        **data["maintenance_and_stage_parameters"]["use_stage_cost"]["routine"]["maintenance"]
+                        **data['maintenance_and_stage_parameters']['use_stage_cost']['routine']['maintenance']
                     )
                 ),
                 major=Major(
                     inspection=MajorInspection(
-                        **data["maintenance_and_stage_parameters"]["use_stage_cost"]["major"]["inspection"]
+                        **data['maintenance_and_stage_parameters']['use_stage_cost']['major']['inspection']
                     ),
                     repair=MajorRepair(
-                        **data["maintenance_and_stage_parameters"]["use_stage_cost"]["major"]["repair"]
+                        **data['maintenance_and_stage_parameters']['use_stage_cost']['major']['repair']
                     )
                 ),
-                replacement_cost_for_bearing_and_expansion_joint=ReplacementCost(
-                    **data["maintenance_and_stage_parameters"]["use_stage_cost"]["replacement_costs_for_bearing_and_expansion_joint"]
+                replacement_costs_for_bearing_and_expansion_joint=ReplacementCost(
+                    **data['maintenance_and_stage_parameters']['use_stage_cost']['replacement_costs_for_bearing_and_expansion_joint']
                 )
             ),
             end_of_life_stage_costs=EndOfLifeStageCosts(
                 demolition_and_disposal=DemolitionDisposal(
-                    **data["maintenance_and_stage_parameters"]["end_of_life_stage_costs"]["demolition_and_disposal"]
+                    **data['maintenance_and_stage_parameters']['end_of_life_stage_costs']['demolition_and_disposal']
                 )
             )
         )

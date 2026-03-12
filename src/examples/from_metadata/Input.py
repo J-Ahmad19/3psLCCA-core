@@ -1,7 +1,6 @@
 import json
 from three_ps_lcca_core.inputs.input import (
     InputMetaData,
-    ProjectMetaData,
     GeneralParameters,
     TrafficAndRoadData,
     VehicleData,
@@ -22,11 +21,6 @@ from three_ps_lcca_core.inputs.input import (
 )
 
 Input_instance = InputMetaData(
-    project_metadata=ProjectMetaData(
-        description="Common input for OSDAG LCC Analysis",
-        standard="IRC 106:1990 / IRC SP 30-2019",
-        country="India",
-    ),
     general_parameters=GeneralParameters(
         service_life_years=75,
         analysis_period_years=150,
@@ -114,9 +108,7 @@ Input_instance = InputMetaData(
 )
 
 
-
 # python -m examples.from_metadata.Input
 if __name__ == "__main__":
-    # Convert to dictionary
     Input = Input_instance.to_dict()
     print(json.dumps(Input, indent=4))

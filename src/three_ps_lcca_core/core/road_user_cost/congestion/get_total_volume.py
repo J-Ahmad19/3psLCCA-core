@@ -47,7 +47,11 @@ def calculate_total_pcu(vehicle_data, debug=True):
     debug_data["total_vehicles"] = total_vehicles
 
     if total_vehicles == 0:
-        raise ValueError("Total vehicle count is zero. Cannot calculate composition.")
+        return {
+            "pcu_values": {},
+            "total_daily_pcu": 0.0,
+            "total_pcu_per_hour": 0.0
+        }
     
     # 2️⃣ Compute traffic composition (%) per vehicle type
     traffic_composition = {}
