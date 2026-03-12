@@ -105,9 +105,6 @@ class VOCPostProcessor:
         return res
 
     def process(self, voc_data: Dict[str, Any]) -> Dict[str, Any]:
-        # print('wpi = ', self.wpi)
-        # print('****************************************')
-        # print('voc_data = ', voc_data)
         adjusted = {"distanceCost": {}, "timeCost": {}}
 
         for vt in vehicle_type_list:

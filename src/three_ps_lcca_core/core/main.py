@@ -85,8 +85,6 @@ def run_full_lcc_analysis(input_data, construction_costs, wpi=None, debug=False)
         ruc_results = input_data.get(
             "daily_road_user_cost_with_vehicular_emissions", {}
         )
-        if debug:
-            print("Bypassing RUC calculation. Using provided RUC:", ruc_results)
 
     else:
         # Calculate RUC normally

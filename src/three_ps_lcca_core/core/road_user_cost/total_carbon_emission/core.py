@@ -37,7 +37,6 @@ def calculate_total_carbon_emission(vehicle_data: dict, distance_per_day_km: flo
         try:
             vehicle_total = float(count) * float(emission_factor) * float(distance_per_day_km)
         except (ValueError, TypeError):
-            print(f"Warning: Skipping {vehicle_type}, invalid numeric values.")
             continue
 
         total_emission += vehicle_total

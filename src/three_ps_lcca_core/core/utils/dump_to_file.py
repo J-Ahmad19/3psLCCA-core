@@ -21,4 +21,3 @@ def dump_to_file(name, data):
     with open(file_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
-    print(f"Debug file saved: {file_path}")
