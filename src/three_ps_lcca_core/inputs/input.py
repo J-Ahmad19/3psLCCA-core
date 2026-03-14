@@ -23,9 +23,6 @@ class GeneralParameters:
         if self.analysis_period_years <= 0:
             raise ValueError("analysis_period_years must be > 0")
 
-        if self.analysis_period_years < self.service_life_years:
-            raise ValueError("analysis_period_years must be >= service_life_years")
-
         if not (0 <= self.investment_ratio <= 1):
             raise ValueError("investment_ratio must be between 0 and 1")
 
@@ -107,7 +104,18 @@ class VehicleData:
             self.mcv.accident_percentage,
         ])
 
-        if abs(total_acc - 100) > 0.1:
+        total_vpd = sum([
+            self.small_cars.vehicles_per_day,
+            self.big_cars.vehicles_per_day,
+            self.two_wheelers.vehicles_per_day,
+            self.o_buses.vehicles_per_day,
+            self.d_buses.vehicles_per_day,
+            self.lcv.vehicles_per_day,
+            self.hcv.vehicles_per_day,
+            self.mcv.vehicles_per_day,
+        ])
+
+        if total_vpd > 0 and abs(total_acc - 100) > 0.1:
             raise ValueError("Vehicle accident percentages must sum to 100")
 
 
@@ -119,6 +127,8 @@ class AccidentSeverityDistribution:
 
     def __post_init__(self):
         total = self.minor + self.major + self.fatal
+        if total == 0:
+            return
         if abs(total - 100) > 1e-6:
             raise ValueError(f"Accident severity must sum to 100. Got {total}")
 
