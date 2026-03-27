@@ -8,74 +8,18 @@ class VOCPostProcessor:
     def __init__(self, wpi_data: Dict[str, Any]):
         if "WPI" not in wpi_data:
             raise ValueError("CRITICAL: Root 'WPI' key missing from input.")
-        self.wpi = wpi_data["WPI"]
-        self.v_cost_wpi = self.wpi.get("vehicle_cost", {})
+        self.wpi = wpi_data["WPI"]  # {vehicle: {cost_key: value}}
 
-    # Categories stored under WPI -> vehicle_cost -> <category> -> <vehicle_key>
-    _VEHICLE_KEYED_CATEGORIES = {"tyre_cost", "spare_parts", "fixed_depreciation"}
-
-    # Categories stored under WPI -> <category> -> <sub_key>  (no vehicle dimension)
-    _SUBKEY_ONLY_CATEGORIES = {"fuel_cost", "passenger_crew_cost"}
-
-    # Categories stored under WPI -> <category> -> <vehicle_key>  (top-level, vehicle-keyed)
-    _TOP_VEHICLE_KEYED_CATEGORIES = {"commodity_holding_cost"}
-
-    def _get_strict_multiplier(self, category: str, vehicle_type: str, sub_key: str = None) -> float:  # type: ignore
-        """
-        Navigates the WPI JSON and extracts a FLOAT.
-        Routing is explicit per category group — no accidental fallthrough.
-        """
+    def _wpi(self, vehicle_type: str, key: str) -> float:
+        """Return WPI[vehicle][key] as a float."""
         v_key = c.O_BUSES if vehicle_type == c.BUSES else vehicle_type
-        val = None
-        path = ""
-
-        if category in self._VEHICLE_KEYED_CATEGORIES:
-            # WPI -> vehicle_cost -> <category> -> <vehicle_key>
-            if category not in self.v_cost_wpi:
-                raise ValueError(
-                    f"CRITICAL: Category '{category}' missing from WPI -> vehicle_cost."
-                )
-            block = self.v_cost_wpi[category]
-            path = f"WPI -> vehicle_cost -> {category}"
-            if not isinstance(block, dict) or v_key not in block:
-                raise ValueError(f"CRITICAL: Vehicle '{v_key}' missing in {path}")
-            val = block[v_key]
-            path += f" -> {v_key}"
-
-        elif category in self._SUBKEY_ONLY_CATEGORIES:
-            # WPI -> <category> -> <sub_key>  (flat, no vehicle dimension)
-            if category not in self.wpi:
-                raise ValueError(f"CRITICAL: Category '{category}' missing from WPI.")
-            if not sub_key:
-                raise ValueError(
-                    f"CRITICAL: sub_key required for category '{category}'."
-                )
-            block = self.wpi[category]
-            path = f"WPI -> {category}"
-            if not isinstance(block, dict) or sub_key not in block:
-                raise ValueError(f"CRITICAL: sub_key '{sub_key}' missing in {path}")
-            val = block[sub_key]
-            path += f" -> {sub_key}"
-
-        elif category in self._TOP_VEHICLE_KEYED_CATEGORIES:
-            # WPI -> <category> -> <vehicle_key>
-            if category not in self.wpi:
-                raise ValueError(f"CRITICAL: Category '{category}' missing from WPI.")
-            block = self.wpi[category]
-            path = f"WPI -> {category}"
-            if not isinstance(block, dict) or v_key not in block:
-                raise ValueError(f"CRITICAL: Vehicle '{v_key}' missing in {path}")
-            val = block[v_key]
-            path += f" -> {v_key}"
-
-        else:
-            raise ValueError(f"CRITICAL: Unknown WPI category '{category}'.")
-
+        if v_key not in self.wpi:
+            raise ValueError(f"CRITICAL: Vehicle '{v_key}' missing from WPI.")
+        val = self.wpi[v_key].get(key)
+        if val is None:
+            raise ValueError(f"CRITICAL: '{key}' missing for vehicle '{v_key}' in WPI.")
         if not isinstance(val, (int, float)):
-            raise ValueError(
-                f"CRITICAL: Expected number at {path}, but got {type(val).__name__}"
-            )
-
+            raise ValueError(f"CRITICAL: WPI['{v_key}']['{key}'] must be numeric, got {type(val).__name__}")
         return val
 
     def _apply_adjustment(
@@ -130,99 +74,63 @@ class VOCPostProcessor:
                 / dist_s["tyre_life"][c.VALUE],
             }
             dc["tyre_cost"] = self._apply_adjustment(
-                b_tyre,
-                self._get_strict_multiplier("tyre_cost", vt),
-                f"WPI -> vehicle_cost -> tyre_cost [{vt}]",
+                b_tyre, self._wpi(vt, "tyre_cost"), f"WPI['{vt}']['tyre_cost']"
             )
 
             # --- Fuel & Lubricants ---
             f_cons = dist_s["fuel_consumption"]
             ratio = petrolToDieselRatio[vt]
 
-            p_mult = self._get_strict_multiplier("fuel_cost", vt, sub_key=c.PETROL)
-            d_mult = self._get_strict_multiplier("fuel_cost", vt, sub_key=c.DIESEL)
+            p_mult = self._wpi(vt, c.PETROL)
+            d_mult = self._wpi(vt, c.DIESEL)
 
-            p_it = (
-                f_cons.get(c.PETROL, 0)
-                * tableC1.petroleum_products_costs[c.PETROL][c.IT]
-            ) / 1000
-            d_it = (
-                f_cons.get(c.DIESEL, 0)
-                * tableC1.petroleum_products_costs[c.DIESEL][c.IT]
-            ) / 1000
-            p_et = (
-                f_cons.get(c.PETROL, 0)
-                * tableC1.petroleum_products_costs[c.PETROL][c.ET]
-            ) / 1000
-            d_et = (
-                f_cons.get(c.DIESEL, 0)
-                * tableC1.petroleum_products_costs[c.DIESEL][c.ET]
-            ) / 1000
+            p_it = (f_cons.get(c.PETROL, 0) * tableC1.petroleum_products_costs[c.PETROL][c.IT]) / 1000
+            d_it = (f_cons.get(c.DIESEL, 0) * tableC1.petroleum_products_costs[c.DIESEL][c.IT]) / 1000
+            p_et = (f_cons.get(c.PETROL, 0) * tableC1.petroleum_products_costs[c.PETROL][c.ET]) / 1000
+            d_et = (f_cons.get(c.DIESEL, 0) * tableC1.petroleum_products_costs[c.DIESEL][c.ET]) / 1000
 
             dc["fuel_cost"] = {
-                c.IT: (ratio[c.PETROL] * p_it * p_mult)
-                + (ratio[c.DIESEL] * d_it * d_mult),
-                c.ET: (ratio[c.PETROL] * p_et * p_mult)
-                + (ratio[c.DIESEL] * d_et * d_mult),
+                c.IT: (ratio[c.PETROL] * p_it * p_mult) + (ratio[c.DIESEL] * d_it * d_mult),
+                c.ET: (ratio[c.PETROL] * p_et * p_mult) + (ratio[c.DIESEL] * d_et * d_mult),
                 c.UNIT: "Rs/km",
                 c.iHTC: True,
             }
 
             for oil in [c.ENGINE_OIL, c.OTHER_OIL, c.GREASE]:
-                o_mult = self._get_strict_multiplier("fuel_cost", vt, sub_key=oil)
                 fac = 1000 if oil == c.ENGINE_OIL else 10000
                 o_base = {
                     c.IT: (dist_s[oil][c.VALUE] * tableC1.petroleum_products_costs[oil][c.IT]) / fac,
                     c.ET: (dist_s[oil][c.VALUE] * tableC1.petroleum_products_costs[oil][c.ET]) / fac,
                 }
-                dc[oil] = self._apply_adjustment(
-                    o_base, o_mult, f"WPI -> fuel_cost -> {oil}"
-                )
+                dc[oil] = self._apply_adjustment(o_base, self._wpi(vt, oil), f"WPI['{vt}']['{oil}']")
 
             # --- Maintenance ---
-            m_mult = self._get_strict_multiplier("spare_parts", vt)
+            m_mult = self._wpi(vt, "spare_parts")
             dc[c.SP] = self._apply_adjustment(
                 {c.IT: dist_s[c.SP][c.IT], c.ET: dist_s[c.SP][c.ET]},
-                m_mult,
-                f"WPI -> vehicle_cost -> spare_parts [{vt}]",
+                m_mult, f"WPI['{vt}']['spare_parts']",
             )
             dc["maintenance_labour"] = self._apply_adjustment(
                 {c.VALUE: dist_s["maintenance_labour"][c.VALUE]},
-                m_mult,
-                f"WPI -> vehicle_cost -> spare_parts -> maintenance_labour [{vt}]",
+                m_mult, f"WPI['{vt}']['spare_parts'] (maintenance_labour)",
             )
 
             # --- Time Related ---
-            fd_mult = self._get_strict_multiplier("fixed_depreciation", vt)
             tc["fixed_cost"] = self._apply_adjustment(
                 {c.IT: time_s["fixed_cost"][c.IT], c.ET: time_s["fixed_cost"][c.ET]},
-                fd_mult,
-                f"WPI -> vehicle_cost -> fixed_depreciation [{vt}]",
+                self._wpi(vt, "fixed_depreciation"), f"WPI['{vt}']['fixed_depreciation']",
             )
-
-            pc_mult_crew = self._get_strict_multiplier(
-                "passenger_crew_cost", vt, sub_key="crew_cost"
-            )
-            pc_mult_pass = self._get_strict_multiplier(
-                "passenger_crew_cost", vt, sub_key="passenger_cost"
-            )
-
             tc["crew_cost"] = self._apply_adjustment(
                 {c.VALUE: time_s["crew_cost"][c.VALUE]},
-                pc_mult_crew,
-                "WPI -> passenger_crew_cost -> crew_cost",
+                self._wpi(vt, "crew_cost"), f"WPI['{vt}']['crew_cost']",
             )
             tc["passenger_time_cost"] = self._apply_adjustment(
                 {c.VALUE: time_s["passenger_time_cost"][c.VALUE]},
-                pc_mult_pass,
-                "WPI -> passenger_crew_cost -> passenger_cost",
+                self._wpi(vt, "passenger_cost"), f"WPI['{vt}']['passenger_cost']",
             )
-
-            ch_mult = self._get_strict_multiplier("commodity_holding_cost", vt)
             tc["commodity_holding_cost"] = self._apply_adjustment(
                 {c.VALUE: time_s["commodity_holding_cost"][c.VALUE]},
-                ch_mult,
-                f"WPI -> commodity_holding_cost [{vt}]",
+                self._wpi(vt, "commodity_holding_cost"), f"WPI['{vt}']['commodity_holding_cost']",
             )
 
             # Totals

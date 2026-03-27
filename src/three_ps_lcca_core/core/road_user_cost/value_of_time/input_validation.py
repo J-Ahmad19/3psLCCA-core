@@ -67,16 +67,15 @@ def validate_wpi(wpi):
     else:
         wpi_data = wpi['WPI']
 
-        # Check if 'vot_cost' is present and is a dictionary
-        if 'vot_cost' not in wpi_data or not isinstance(wpi_data['vot_cost'], dict):
-            errors.append(
-                "'wpi.WPI' must contain a valid 'vot_cost' dictionary.")
-
-        # Validate the positivity of the 'vot_cost' values
-        for vehicle, vot in wpi_data['vot_cost'].items():
-            if vot <= 0:
-                errors.append(
-                    f"'{vehicle}' VOT (Value of Time) cost must be positive.")
+        # Each vehicle entry must have a positive 'vot_cost'
+        for vehicle, vehicle_wpi in wpi_data.items():
+            if not isinstance(vehicle_wpi, dict):
+                errors.append(f"WPI entry for '{vehicle}' must be a dictionary.")
+                continue
+            if 'vot_cost' not in vehicle_wpi:
+                errors.append(f"Missing 'vot_cost' for vehicle '{vehicle}' in WPI.")
+            elif not isinstance(vehicle_wpi['vot_cost'], (int, float)) or vehicle_wpi['vot_cost'] <= 0:
+                errors.append(f"'{vehicle}' VOT cost must be a positive number.")
 
     # Return the validation result
     is_valid = len(errors) == 0

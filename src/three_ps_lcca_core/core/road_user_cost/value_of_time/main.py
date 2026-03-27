@@ -26,7 +26,7 @@ def calculate_additional_time_cost(traffic_input, wpi, debug=False):
         traffic_input["additional_inputs"]["alternate_road_carriageway"]))
     occupancy = IRC.average_occupancy()
 
-    wpi_vot = wpi["WPI"]["vot_cost"]
+    wpi_block = wpi["WPI"]
 
     total_cost = 0
     breakdown = {}
@@ -42,7 +42,7 @@ def calculate_additional_time_cost(traffic_input, wpi, debug=False):
         persons = occupancy.get(vehicle, 1)     # persons/vehicle
 
         # Adjust based on WPI factor
-        wpi_factor = wpi_vot.get(vehicle)
+        wpi_factor = wpi_block.get(vehicle, {}).get("vot_cost")
         if wpi_factor is None:
             raise ValueError(
                 f"Missing WPI factor for vehicle type: '{vehicle}'")

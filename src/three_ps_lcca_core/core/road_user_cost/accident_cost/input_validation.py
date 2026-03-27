@@ -23,19 +23,18 @@ def validate_accident_input(traffic_input: dict, wpi: dict) -> tuple[bool, list[
                 f"Severity distribution percentages must sum to 100 (found {total_percent}).")
 
         # Ensure WPI has medical cost indices for these severities
-        medical_wpi = wpi.get('WPI', {}).get('medical_cost', {})
+        sample_vehicle = next(iter(wpi.get('WPI', {}).values()), {})
         for severity, value in sev_dist.items():
             if not isinstance(value, (int, float)) or value < 0:
                 errors.append(
                     f"Invalid percentage for severity '{severity}': {value}")
-            if severity not in medical_wpi:
+            if severity not in sample_vehicle:
                 errors.append(
                     f"Missing WPI medical cost index for severity: '{severity}'.")
 
     # 3. Validate vehicle_data and WPI mapping
     vehicle_data = traffic_input.get('vehicle_data')
-    property_damage_wpi = wpi.get('WPI', {}).get(
-        'vehicle_cost', {}).get('property_damage', {})
+    wpi_block = wpi.get('WPI', {})
 
     if not isinstance(vehicle_data, dict):
         errors.append("'vehicle_data' must be a dictionary.")
@@ -54,9 +53,9 @@ def validate_accident_input(traffic_input: dict, wpi: dict) -> tuple[bool, list[
                 errors.append(
                     f"Missing or invalid 'vehicles_per_day' for vehicle '{vehicle}'.")
 
-            # Check if WPI has property damage keys (handling d_buses -> o_buses mapping)
+            # Check if WPI has property damage key for this vehicle
             lookup_key = c.O_BUSES if vehicle == c.D_BUSES else vehicle
-            if lookup_key not in property_damage_wpi:
+            if lookup_key not in wpi_block or 'property_damage' not in wpi_block.get(lookup_key, {}):
                 errors.append(
                     f"Missing WPI property damage index for vehicle key: '{lookup_key}'.")
 

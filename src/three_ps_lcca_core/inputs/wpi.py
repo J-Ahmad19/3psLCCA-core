@@ -1,14 +1,30 @@
 from dataclasses import dataclass, asdict
 from typing import Dict
 
+VEHICLES = [
+    "small_cars", "big_cars", "two_wheelers", "o_buses",
+    "d_buses", "lcv", "hcv", "mcv",
+]
+
 
 @dataclass(frozen=True)
-class fuel_cost:
+class VehicleWPI:
     petrol: float
     diesel: float
     engine_oil: float
     other_oil: float
     grease: float
+    property_damage: float
+    tyre_cost: float
+    spare_parts: float
+    fixed_depreciation: float
+    commodity_holding_cost: float
+    passenger_cost: float
+    crew_cost: float
+    fatal: float
+    major: float
+    minor: float
+    vot_cost: float
 
     def __post_init__(self):
         for field_name, value in self.__dict__.items():
@@ -19,77 +35,15 @@ class fuel_cost:
 
 
 @dataclass(frozen=True)
-class vehicle_category_cost:
-    small_cars: float
-    big_cars: float
-    two_wheelers: float
-    o_buses: float
-    d_buses: float
-    lcv: float
-    hcv: float
-    mcv: float
-
-    def __post_init__(self):
-        for field_name, value in self.__dict__.items():
-            if not isinstance(value, (int, float)):
-                raise TypeError(f"{field_name} must be numeric")
-            if value <= 0:
-                raise ValueError(f"{field_name} cost must be > 0")
-
-
-@dataclass(frozen=True)
-class vehicle_cost:
-    property_damage: vehicle_category_cost
-    tyre_cost: vehicle_category_cost
-    spare_parts: vehicle_category_cost
-    fixed_depreciation: vehicle_category_cost
-
-
-@dataclass(frozen=True)
-class commodity_holding_cost(vehicle_category_cost):
-    pass
-
-
-@dataclass(frozen=True)
-class vot_cost(vehicle_category_cost):
-    pass
-
-
-@dataclass(frozen=True)
-class passenger_crew_cost:
-    passenger_cost: float
-    crew_cost: float
-
-    def __post_init__(self):
-        for field_name, value in self.__dict__.items():
-            if not isinstance(value, (int, float)):
-                raise TypeError(f"{field_name} must be numeric")
-            if value <= 0:
-                raise ValueError(f"{field_name} cost must be > 0")
-
-
-@dataclass(frozen=True)
-class medical_cost:
-    fatal: float
-    major: float
-    minor: float
-
-    def __post_init__(self):
-        for k, v in self.__dict__.items():
-            if not isinstance(v, (int, float)):
-                raise TypeError(f"Medical cost '{k}' must be numeric")
-            if v <= 0:
-                raise ValueError(f"Medical cost '{k}' must be > 0")
-
-
-@dataclass(frozen=True)
 class WPIBlock:
-    fuel_cost: fuel_cost
-    vehicle_cost: vehicle_cost
-    commodity_holding_cost: commodity_holding_cost
-    passenger_crew_cost: passenger_crew_cost
-    medical_cost: medical_cost
-    vot_cost: vot_cost
+    small_cars: VehicleWPI
+    big_cars: VehicleWPI
+    two_wheelers: VehicleWPI
+    o_buses: VehicleWPI
+    d_buses: VehicleWPI
+    lcv: VehicleWPI
+    hcv: VehicleWPI
+    mcv: VehicleWPI
 
 
 @dataclass(frozen=True)
@@ -104,32 +58,21 @@ class WPIMetaData:
             raise ValueError("year must be positive")
 
     def to_dict(self):
-        if isinstance(self, WPIMetaData):
-            return asdict(self)
+        return asdict(self)
 
     @classmethod
     def from_dict(cls, data: Dict):
-        return cls(
-            year=data["year"],
-            WPI=WPIBlock(
-                fuel_cost=fuel_cost(**data["WPI"]["fuel_cost"]),
-                vehicle_cost=vehicle_cost(
-                    property_damage=vehicle_category_cost(
-                        **data["WPI"]["vehicle_cost"]["property_damage"]),
-                    tyre_cost=vehicle_category_cost(
-                        **data["WPI"]["vehicle_cost"]["tyre_cost"]),
-                    spare_parts=vehicle_category_cost(
-                        **data["WPI"]["vehicle_cost"]["spare_parts"]),
-                    fixed_depreciation=vehicle_category_cost(
-                        **data["WPI"]["vehicle_cost"]["fixed_depreciation"]),
-                ),
-                commodity_holding_cost=commodity_holding_cost(
-                    **data["WPI"]["commodity_holding_cost"]),
-                passenger_crew_cost=passenger_crew_cost(
-                    passenger_cost=data["WPI"]["passenger_crew_cost"]["passenger_cost"],
-                    crew_cost=data["WPI"]["passenger_crew_cost"]["crew_cost"],
-                ),
-                medical_cost=medical_cost(**data["WPI"]["medical_cost"]),
-                vot_cost=vot_cost(**data["WPI"]["vot_cost"]),
-            )
-        )
+        if "year" not in data:
+            raise KeyError("WPI data missing 'year'")
+        if "WPI" not in data:
+            raise KeyError("WPI data missing 'WPI' block")
+        wpi_raw = data["WPI"]
+        vehicles = {}
+        for v in VEHICLES:
+            if v not in wpi_raw:
+                raise KeyError(f"WPI block missing vehicle: '{v}'")
+            try:
+                vehicles[v] = VehicleWPI(**wpi_raw[v])
+            except TypeError as e:
+                raise TypeError(f"WPI['{v}']: {e}") from None
+        return cls(year=data["year"], WPI=WPIBlock(**vehicles))

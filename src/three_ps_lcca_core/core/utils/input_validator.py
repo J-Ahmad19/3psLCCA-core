@@ -350,24 +350,22 @@ def ironclad_validator(input, suggestions, wpi=None, eval_wpi=True):
             )
             return report
 
-        medical_wpi = wpi.get("WPI", {}).get("medical_cost", {})
-        prop_damage_wpi = (
-            wpi.get("WPI", {}).get("vehicle_cost", {}).get("property_damage", {})
-        )
+        wpi_block = wpi.get("WPI", {})
 
-        # Severity mapping
+        # Severity mapping — fatal/major/minor are per-vehicle keys, same across all
+        sample_vehicle = next(iter(wpi_block.values()), {})
         for sev in ["fatal", "major", "minor"]:
-            if sev not in medical_wpi:
+            if sev not in sample_vehicle:
                 report["errors"].append(
                     f"WPI Error: Missing medical cost index for severity '{sev}'."
                 )
 
-        # Vehicle mapping
+        # Vehicle mapping — vehicle must exist as a top-level key in WPI block
         for code in veh_data.keys():
             lookup_key = "o_buses" if code == "d_buses" else code
-            if lookup_key not in prop_damage_wpi:
+            if lookup_key not in wpi_block:
                 report["errors"].append(
-                    f"WPI Error: Missing property damage index for '{lookup_key}'."
+                    f"WPI Error: Missing WPI entry for vehicle '{lookup_key}'."
                 )
 
     return report
