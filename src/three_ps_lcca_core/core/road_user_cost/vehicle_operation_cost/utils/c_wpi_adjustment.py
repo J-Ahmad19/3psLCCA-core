@@ -132,6 +132,10 @@ class VOCPostProcessor:
                 {c.VALUE: time_s["commodity_holding_cost"][c.VALUE]},
                 self._wpi(vt, "commodity_holding_cost"), f"WPI['{vt}']['commodity_holding_cost']",
             )
+            tc["depreciation_cost"] = self._apply_adjustment(
+                {c.IT: time_s["depreciation_cost"][c.IT], c.ET: time_s["depreciation_cost"][c.ET]},
+                self._wpi(vt, "fixed_depreciation"), f"WPI['{vt}']['fixed_depreciation']",
+            )
 
             # Totals
             tc["total_time_cost"] = {
