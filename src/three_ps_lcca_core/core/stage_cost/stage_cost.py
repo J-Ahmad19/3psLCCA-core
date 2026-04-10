@@ -86,7 +86,7 @@ class StageCostCalculator:
 
     def _road_user_cost_and_carbon_emissions_cost(
         self,
-        duration_days: int = None,
+        duration_days: float | int | None  = None,
         spwf: Optional[float] = None,
     ) -> Dict[str, Any]:
         """
@@ -96,8 +96,14 @@ class StageCostCalculator:
 
         # Extract daily total RUC
         try:
-            daily_ruc = self.daily_road_user_cost_with_vehicular_emissions["total_daily_ruc"]  # type: ignore
-            emission_kg_per_km = self.daily_road_user_cost_with_vehicular_emissions["total_carbon_emission"]["total_emission_kgCO2e"]  # type: ignore
+            # type: ignore
+            daily_ruc = self.daily_road_user_cost_with_vehicular_emissions[
+                "total_daily_ruc"
+            ]
+            # type: ignore
+            emission_kg_per_km = self.daily_road_user_cost_with_vehicular_emissions[
+                "total_carbon_emission"
+            ]["total_emission_kgCO2e"]
         except KeyError as exc:
             raise ValueError(
                 f"Missing required road user cost data key: {exc}"
@@ -108,14 +114,14 @@ class StageCostCalculator:
 
         # Carbon cost
         try:
-            scc = self.input_params["general"]["social_cost_of_carbon_per_mtco2e"]/1000
+            scc = (
+                self.input_params["general"]["social_cost_of_carbon_per_mtco2e"] / 1000
+            )
             conv_rate = self.input_params["general"]["currency_conversion"]
         except KeyError as exc:
             raise ValueError(f"Missing required input parameter: {exc}") from exc
 
-        total_emission_cost = (
-            emission_kg_per_km * duration_days * scc * conv_rate
-        )
+        total_emission_cost = emission_kg_per_km * duration_days * scc * conv_rate
 
         # Apply Present Worth Factor (SPWF) if given
         if spwf is not None:
@@ -202,7 +208,7 @@ class StageCostCalculator:
         carbon_cost = self.initial_carbon_cost * spwi
         construction_road_user_cost_data = (
             self._road_user_cost_and_carbon_emissions_cost(
-                duration_days=int(duration), spwf=spwi
+                duration_days=duration, spwf=spwi
             )
         )
 
@@ -216,6 +222,7 @@ class StageCostCalculator:
                     "initial_cost_of_construction": self.initial_construction_cost,
                     "cost_of_initial_carbon_emissions_in": self.initial_carbon_cost,
                     "sum_of_present_worth_factor": spwi,
+                    "duration": duration,
                 },
                 "computed_values": {
                     "present_value_of_construction_costs": initial_cost,
@@ -657,7 +664,8 @@ class StageCostCalculator:
             * self.input_params["general"]["days_per_month"]
         )
         demolition_road_user_cost_data = self._road_user_cost_and_carbon_emissions_cost(
-            duration_days=int(duration_of_demolition_in_days), spwf=demolition_spwi
+            duration_days=duration_of_demolition_in_days,
+            spwf=demolition_spwi,
         )
 
         if self.debug:
@@ -716,12 +724,8 @@ class StageCostCalculator:
                 },
                 "computed_values": {
                     "initial_road_user_cost": ruc["ruc_cost"],
-                    "initial_vehicular_emission_cost": ruc[
-                        "vehicular_emission_cost"
-                    ],
-                    "time_cost_of_loan": time_cost_loan[
-                        "total_time_cost_of_loan"
-                    ],
+                    "initial_vehicular_emission_cost": ruc["vehicular_emission_cost"],
+                    "time_cost_of_loan": time_cost_loan["total_time_cost_of_loan"],
                 },
                 "road_user_cost_breakdown": ruc["debug"],
                 "total_time_cost_of_loan": time_cost_loan["breakdown"],
@@ -868,6 +872,15 @@ class StageCostCalculator:
                         "breakdown"
                     ],
                     "road_user_and_vehicular_emission_costs_breakdown": road_user_and_vehicular_emission,
+                    "duration_of_reconstruction_in_days_breakdown": {
+                        "construction_period_months": self.input_params["general"][
+                            "construction_period_months"
+                        ],
+                        "days_per_month": self.input_params["general"][
+                            "days_per_month"
+                        ],
+                        "duration_of_reconstruction_in_days": duration_of_reconstruction_in_days,
+                    },
                     "reconstruction_costs_breakdown": reconstruction["breakdown"],
                     "total_demolition_and_disposal_costs": demolition_and_disposal[
                         "total_demolition_and_disposal_costs"
