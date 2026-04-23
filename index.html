@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
+    <script src="lcca_wasm_api.js"></script> </head>
+<body>
+    <h2>3psLCCA-core wasm API
+
+    </h2>
+    <script>
+        async function testAPI() {
+            try {
+                // Tell the user we are starting...
+                document.body.innerHTML += `<p style="color: #888;">Initializing engine...</p>`;
+
+                // 1. Point to your local wheel file
+                const engine = new LCCAEngine('./dist/three_ps_lcca_core-0.0.0-py3-none-any.whl');
+                await engine.init();
+
+                document.body.innerHTML += `<p style="color: #888;">Engine initialized! Running calculation...</p>`;
+
+                // 2. The JSON payload
+                const frontendPayload = {
+                    "initial_construction_cost": 12843979.44,
+                    "initial_carbon_emissions_cost": 2065434.91,
+                    "superstructure_construction_cost": 9356038.92,
+                    "total_scrap_value": 2164095.02
+                };
+
+                // 3. Call the API
+                const results = await engine.calculate(frontendPayload);
+                
+                // Print results
+                document.body.innerHTML += `<pre style="color: #5ce6cd;">${JSON.stringify(results, null, 2)}</pre>`;
+
+            } catch (error) {
+                // IF ANYTHING FAILS, PRINT IT TO THE SCREEN IN RED
+                document.body.innerHTML += `<div style="color: #ff6b6b; background: #333; padding: 10px; border-radius: 5px; margin-top: 20px;">
+                    <strong>🚨 Error Caught:</strong><br>
+                    ${error.message}
+                </div>`;
+                console.error("Full Error Details:", error);
+            }
+        }
+
+        testAPI();
+    </script>
+</body>
+</html>
