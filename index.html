@@ -1,49 +1,138 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <title>3psLCCA Professional WebAssembly Demo</title>
+    
+    <!-- 1. Pyodide -->
     <script src="https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js"></script>
-    <script src="lcca_wasm_api.js"></script> </head>
+    
+    <!-- 2. YOUR INDEPENDENT API (CDN Link) -->
+    <script src="https://cdn.jsdelivr.net/gh/J-Ahmad19/3psLCCA-core@main/lcca_wasm_api.js"></script> 
+
+    <style>
+        body { font-family: -apple-system, sans-serif; background: #121212; color: #e0e0e0; padding: 30px; display: flex; gap: 30px; max-width: 1200px; margin: auto; }
+        h2 { color: #ffffff; margin-top: 0; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .panel { background: #1e1e1e; padding: 25px; border-radius: 8px; border: 1px solid #333; }
+        .sidebar { flex: 1; min-width: 300px; }
+        .main { flex: 2; }
+        
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 13px; color: #aaa; margin-bottom: 5px; }
+        input { width: 100%; padding: 10px; background: #2a2a2a; border: 1px solid #444; color: #fff; border-radius: 4px; box-sizing: border-box; }
+        
+        button { width: 100%; padding: 12px; background: #2563eb; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; transition: 0.2s;}
+        button:hover:not(:disabled) { background: #1d4ed8; }
+        button:disabled { background: #555; cursor: not-allowed; }
+        
+        #status { margin-top: 15px; font-size: 14px; color: #fbbf24; font-weight: bold; }
+        pre { background: #000; padding: 15px; border-radius: 5px; color: #5ce6cd; overflow-x: auto; font-size: 13px; max-height: 600px; overflow-y: auto; }
+    </style>
+</head>
 <body>
-    <h2>3psLCCA-core wasm API
 
-    </h2>
+    <!-- LEFT PANEL: USER INPUTS -->
+    <div class="panel sidebar">
+        <h2>Input Parameters</h2>
+        
+        <div class="form-group">
+            <label>Initial Construction Cost (₹)</label>
+            <input type="number" id="cost" value="12843979.44">
+        </div>
+        <div class="form-group">
+            <label>Initial Carbon Emissions Cost (₹)</label>
+            <input type="number" id="carbon" value="2065434.91">
+        </div>
+        <div class="form-group">
+            <label>Superstructure Cost (₹)</label>
+            <input type="number" id="super" value="9356038.92">
+        </div>
+        <div class="form-group">
+            <label>Total Scrap Value (₹)</label>
+            <input type="number" id="scrap" value="2164095.02">
+        </div>
+
+        <button id="calcBtn" onclick="runCalculation()">Run LCCA Analysis</button>
+        <div id="status">Waiting for engine...</div>
+    </div>
+
+    <!-- RIGHT PANEL: JSON OUTPUT -->
+    <div class="panel main">
+        <h2>Engine Output (JSON)</h2>
+        <pre id="output">Initialize the engine to see results...</pre>
+    </div>
+
     <script>
-        async function testAPI() {
+        // Point the engine to your live CDN wheel file
+        const WHL_URL = "https://cdn.jsdelivr.net/gh/J-Ahmad19/3psLCCA-core@main/dist/three_ps_lcca_core-0.0.0-py3-none-any.whl";
+        const engine = new LCCAEngine(WHL_URL);
+        let isEngineLoaded = false;
+
+        // Auto-initialize the engine when the page loads
+        window.onload = async () => {
+            const statusEl = document.getElementById('status');
+            const btn = document.getElementById('calcBtn');
+            btn.disabled = true;
+            statusEl.innerText = "Downloading WebAssembly Engine...";
+            
             try {
-                // Tell the user we are starting...
-                document.body.innerHTML += `<p style="color: #888;">Initializing engine...</p>`;
-
-                // 1. Point to your local wheel file
-                const engine = new LCCAEngine('./dist/three_ps_lcca_core-0.0.0-py3-none-any.whl');
                 await engine.init();
+                isEngineLoaded = true;
+                statusEl.innerText = "Engine Ready! Waiting for inputs.";
+                statusEl.style.color = "#34d399";
+                btn.disabled = false;
+            } catch (e) {
+                statusEl.innerText = "Failed to load engine.";
+                statusEl.style.color = "#f87171";
+                console.error(e);
+            }
+        };
 
-                document.body.innerHTML += `<p style="color: #888;">Engine initialized! Running calculation...</p>`;
+        async function runCalculation() {
+            if (!isEngineLoaded) return;
 
-                // 2. The JSON payload
-                const frontendPayload = {
-                    "initial_construction_cost": 12843979.44,
-                    "initial_carbon_emissions_cost": 2065434.91,
-                    "superstructure_construction_cost": 9356038.92,
-                    "total_scrap_value": 2164095.02
+            const btn = document.getElementById('calcBtn');
+            const statusEl = document.getElementById('status');
+            const outputEl = document.getElementById('output');
+            
+            btn.disabled = true;
+            statusEl.innerText = "Fetching Metadata & Calculating...";
+            statusEl.style.color = "#fbbf24";
+            outputEl.innerText = "Processing...";
+
+            try {
+                // 1. Fetch the General Parameters (Input.json) & WPI (wpi.json) from GitHub
+                const inputDataUrl = 'https://raw.githubusercontent.com/J-Ahmad19/3psLCCA-core/main/src/examples/from_dict/Input.json';
+                const wpiDataUrl = 'https://raw.githubusercontent.com/J-Ahmad19/3psLCCA-core/main/src/examples/from_dict/wpi.json';
+                
+                const inputData = await fetch(inputDataUrl).then(r => r.json());
+                const wpiData = await fetch(wpiDataUrl).then(r => r.json());
+
+                // 2. Grab the dynamic cost numbers the user typed into the form
+                const costData = {
+                    "initial_construction_cost": parseFloat(document.getElementById('cost').value),
+                    "initial_carbon_emissions_cost": parseFloat(document.getElementById('carbon').value),
+                    "superstructure_construction_cost": parseFloat(document.getElementById('super').value),
+                    "total_scrap_value": parseFloat(document.getElementById('scrap').value)
                 };
 
-                // 3. Call the API
-                const results = await engine.calculate(frontendPayload);
+                // 3. Pass all three dynamic objects to your WebAssembly API
+                const results = await engine.calculate(inputData, costData, wpiData);
                 
-                // Print results
-                document.body.innerHTML += `<pre style="color: #5ce6cd;">${JSON.stringify(results, null, 2)}</pre>`;
-
+                // 4. Display the resulting JSON
+                outputEl.innerText = JSON.stringify(results, null, 2);
+                statusEl.innerText = "Analysis Complete!";
+                statusEl.style.color = "#34d399";
+                
             } catch (error) {
-                // IF ANYTHING FAILS, PRINT IT TO THE SCREEN IN RED
-                document.body.innerHTML += `<div style="color: #ff6b6b; background: #333; padding: 10px; border-radius: 5px; margin-top: 20px;">
-                    <strong>🚨 Error Caught:</strong><br>
-                    ${error.message}
-                </div>`;
-                console.error("Full Error Details:", error);
+                outputEl.innerText = "ERROR:\n" + error.message + "\n\nEnsure Input.json and wpi.json exist on GitHub!";
+                statusEl.innerText = "Calculation Failed.";
+                statusEl.style.color = "#f87171";
+                console.error(error);
+            } finally {
+                btn.disabled = false;
             }
         }
-
-        testAPI();
     </script>
 </body>
 </html>

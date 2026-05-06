@@ -1,5 +1,3 @@
-
-
 /**
  * 3psLCCA WebAssembly Engine API
  * This script initializes the Python engine and exposes the calculation function.
@@ -7,7 +5,7 @@
 
 class LCCAEngine {
     constructor(whlUrl) {
-        this.whlUrl = whlUrl; // The URL to the .whl file (will act as the CDN)
+        this.whlUrl = whlUrl; // The CDN URL to the .whl file
         this.pyodide = null;
         this.isReady = false;
     }
@@ -30,36 +28,58 @@ class LCCAEngine {
         console.log("LCCA Engine Ready!");
     }
 
-    // 2. The main API function to be called by the frontend
-    async calculate(jsonPayload) {
+    /**
+     * 2. The main API function to be called by the frontend
+     * @param {Object} inputData - Matches InputMetaData structure (Traffic, Service Life, etc.)
+     * @param {Object} costData - Construction cost breakdown (User input)
+     * @param {Object} wpiData - Matches WPIMetaData structure
+     */
+    async calculate(inputData, costData, wpiData) {
         if (!this.isReady) {
             throw new Error("Engine is not initialized. Call init() first.");
         }
 
-        // Convert the JS object payload into a JSON string for Python
-        const payloadString = JSON.stringify(jsonPayload);
+        // Attach the JS objects to the global window so Python can read them securely without string interpolation
+        window.__lcca_payloads = {
+            input: inputData,
+            cost: costData,
+            wpi: wpiData
+        };
 
-        // Run the Python calculation
         const resultString = await this.pyodide.runPythonAsync(`
-            import json
-            from three_ps_lcca_core.core.main import run_full_lcc_analysis
-            from examples.from_dict.Input import Input
-            from examples.from_dict.wpi import wpi
+import json
+import js
+from three_ps_lcca_core.core.main import run_full_lcc_analysis, get_IRC_standard_suggestions
 
-            # Load the payload sent from the frontend
-            payload = json.loads('${payloadString}')
+# Safely pull the JavaScript objects into Python dictionaries
+js_payloads = js.window.__lcca_payloads
 
-            # Run analysis using the dynamic payload
-            results = run_full_lcc_analysis(
-                Input, 
-                payload,  # Passing the payload exactly as received
-                wpi=wpi, 
-                debug=False
-            )
+input_dict = js_payloads.input.to_py()
+cost_dict = js_payloads.cost.to_py()
+wpi_dict = js_payloads.wpi.to_py()
 
-            # Return as JSON string
-            json.dumps(results)
+# Run the full analysis using the dynamic dictionaries from the frontend
+analysis_results = run_full_lcc_analysis(
+    input_dict, 
+    cost_dict,  
+    wpi=wpi_dict, 
+    debug=False
+)
+
+# Fetch the IRC suggestions
+suggestions = get_IRC_standard_suggestions()
+
+# Merge them into one object
+full_response = {
+    "analysis_results": analysis_results,
+    "irc_suggestions": suggestions
+}
+
+json.dumps(full_response)
         `);
+
+        // Clean up the global window object to prevent memory leaks
+        delete window.__lcca_payloads;
 
         // Parse it back to a JS object and return it to the frontend
         return JSON.parse(resultString);
